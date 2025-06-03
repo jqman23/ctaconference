@@ -422,6 +422,8 @@
     </style>
 </head>
 <body>
+<div id="speaker-bio-overlay" class="speaker-bio-overlay hidden">
+</div>
 <div class="bg-gradient-to-br from-blue-50 to-indigo-50">
             <main class="container mx-auto px-4 py-8">
 <div class="timezone-row flex items-center justify-between mb-8">
@@ -3840,6 +3842,7 @@ closeModal.addEventListener('click', function() {
         modalPanel.style.top = '';
         modalPanel.style.left = '';
         modalPanel.style.transform = '';
+        speakerBioOverlay.classList.add('hidden');
     }, 300);
 });
 
@@ -3853,6 +3856,7 @@ modal.addEventListener('click', function(e) {
             modalPanel.style.top = '';
             modalPanel.style.left = '';
             modalPanel.style.transform = '';
+            speakerBioOverlay.classList.add('hidden');
         }, 300);
     }
 });
