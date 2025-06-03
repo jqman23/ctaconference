@@ -1,0 +1,569 @@
+<div class="blurb-widget">
+  <!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" data-tab="standard">Blurbs</button>
+  <button class="tab" data-tab="builder">Message Generator</button>
+  <button class="tab" data-tab="links">Useful Links</button>
+</div>
+
+  <!-- Prewritten Blurbs -->
+  <div class="blurbs-section" id="standard" style="display: block;">
+    <div class="mode-selector">
+      <label for="typeSelect">What would you like to promote?</label>
+      <select id="typeSelect">
+        <option value="general">General Conference</option>
+        <option value="sessions">Skill Building Sessions</option>
+        <option value="ceus">Continuing Education Units (CEUs)</option>
+        <option value="group">Group Registrations</option>
+      </select>
+    </div>
+    <div id="blurb-container"></div>
+  </div>
+
+  <!-- Impact Message Builder -->
+  <div class="blurbs-section" id="builder" style="display: none;">
+    <h2>IAFSN Message Generator</h2>
+    <p>What type of message would you like to generate? Any information you input here will be reflected in the generated message. Here are ideas of what you could include:<ul><li>Information about your network</li><li>Information about yourself</li><li>The tone of the message</li><li>Your intended audience</li></ul></p>
+    <textarea id="custom" rows="3" placeholder="e.g. We are the National Association of Family Support Centres, and I want this message to inspire others to join us in a shared mission to transform systems and strengthen families."></textarea>
+    <button id="generateBtn">Generate Message</button>
+<button id="copyBtn">Copy to Clipboard</button>
+<div id="copyMsgBuilder" class="copied-msg" style="display: none;">Copied!</div>
+    <textarea id="output" rows="5" placeholder="Generated text will appear here…"></textarea>
+  </div>
+<div class="blurbs-section" id="links" style="display: none;">
+  <h2>Useful Links</h2>
+  <ul class="useful-links">
+    <li><a href="https://www.ctaconference.org" target="_blank">🌐 Conference Website</a></li>
+    <li><a href="https://cvent.me/grogV9" target="_blank">📝 Register for the Conference</a></li>
+    <li><a href="https://cvent.me/grWORn" target="_blank">📚 More Information about CEUs</a></li>
+    <li><a href="https://cvent.me/drM2No" target="_blank">🛠️ More Information about Skill Building Sessions</a></li>
+  </ul>
+</div>
+
+<!-- PDF Resources -->
+<div class="pdf-downloads">
+  <h4><i class="fas fa-file-download" style="margin-right: 8px;"></i>Downloadable Resources</h4>
+  <div class="resource-cards">
+    
+    <!-- Resource 1 -->
+<div class="resource-card">
+  <a href="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/9cba2895bda143079ada7e9822593417.pdf" target="_blank">
+    <div class="resource-title">📄 IAFSN Partnership Flyer</div>
+    <div class="resource-desc">One-page flyer depicting IAFSN's partnership with the conference, including a discount code.</div>
+  </a>
+  <div class="preview-toggle" onclick="togglePreview('preview1', this)">View PDF Preview</div>
+  <a class="download-pdf" href="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/9cba2895bda143079ada7e9822593417.pdf" target="_blank" style="display:none;">Download PDF</a>
+  <div class="pdf-preview" id="preview1">
+    <iframe src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/9cba2895bda143079ada7e9822593417.pdf#toolbar=0&navpanes=0&scrollbar=0"></iframe>
+  </div>
+</div>
+
+    <!-- Resource 2 -->
+<div class="resource-card">
+  <a href="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/6572cafe2f474573acbedb2319726db8.pdf" target="_blank">
+    <div class="resource-title">📄 Conference Flyer</div>
+    <div class="resource-desc">General overview of the conference.</div>
+  </a>
+  <div class="preview-toggle" onclick="togglePreview('preview2', this)">View PDF Preview</div>
+  <a class="download-pdf" href="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/6572cafe2f474573acbedb2319726db8.pdf" target="_blank" style="display:none;">Download PDF</a>
+  <div class="pdf-preview" id="preview2">
+    <iframe src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/6572cafe2f474573acbedb2319726db8.pdf#toolbar=0&navpanes=0&scrollbar=0"></iframe>
+  </div>
+</div>
+
+  </div>
+</div>
+
+
+
+  <div id="toast" class="toast">Copied!</div>
+</div>
+
+<style>
+  body, .blurb-widget, .blurb-widget * {
+    font-family: 'Montserrat', sans-serif;
+  }
+  .blurb-widget {
+    max-width: 700px; margin: auto;
+    padding: 24px; background: #F4F4F4; border-radius: 10px;
+  }
+  .tabs {
+    display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;
+  }
+  .tab {
+    background: #E0E0E0; border: none; padding: 10px 16px;
+    border-radius: 6px; cursor: pointer; font-weight: bold;
+    color: #004990;
+  }
+  .tab.active {
+    background: #004990; color: #fff;
+  }
+  .mode-selector {
+    text-align: center; margin-bottom: 20px;
+  }
+  .mode-selector label { margin-right: 8px; }
+  .mode-selector select {
+    padding: 6px 12px; border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  .blurbs-section { margin-top: 20px; }
+  .blurb-card {
+    background: #fff; border-left: 5px solid #004990;
+    padding: 16px; border-radius: 6px; margin-bottom: 16px;
+  }
+  .blurb-card p {
+    margin: 0 0 10px; color: #333; font-size: 16px;
+  }
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start; /* Prevents LinkedIn/Facebook buttons from stretching */
+}
+.actions button {
+  color: #fff; border: none;
+  padding: 6px 12px; border-radius: 5px; cursor: pointer;
+}
+
+.actions button.copy-btn {
+  background-color: #89A84F; /* Green */
+}
+
+.actions button.copy-btn:hover {
+  background-color: #7A9645; /* Darker green on hover */
+}
+
+.actions button:not(.copy-btn) {
+  background: #004990;
+}
+
+.instruction {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #162A53;
+  flex-wrap: wrap; /* Optional: allows line wrap on narrow screens */
+}
+
+.instruction a {
+  display: inline;
+  color: #004990;
+  text-decoration: underline;
+  margin: 0;
+}
+
+  .show-more {
+    text-align: center; margin-bottom: 16px;
+  }
+  .show-more button {
+    background: none; border: none; color: #004990;
+    cursor: pointer; text-decoration: underline;
+  }
+  .pdf-downloads {
+    margin-top: 30px; background: #fff; border: 1px solid #ddd;
+    padding: 16px; border-radius: 6px;
+  }
+  .pdf-downloads h4 { margin-top: 0; color: #004990; }
+  .pdf-downloads ul { list-style: none; padding-left: 0; }
+  .pdf-downloads li { margin-bottom: 10px; }
+  .pdf-downloads a {
+    text-decoration: none; color: #004990; font-weight: 500;
+  }
+  .toast {
+    position: fixed; bottom: 30px; right: 30px;
+    background: #89A84F; color: #fff; padding: 10px 16px;
+    border-radius: 4px; opacity: 0; transition: opacity .3s;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+
+  #builder textarea {
+    width: 100%; box-sizing: border-box; padding: 10px;
+    margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;
+    resize: vertical;
+  }
+  #builder button {
+    padding: 10px 16px; border: none; border-radius: 4px;
+    cursor: pointer; margin-right: 8px; margin-bottom: 12px;
+  }
+  #generateBtn { background: #1E3A65; color: #fff; }
+  #copyBtn     { background: #DDE6C0; color: #000; }
+  #copyMsg     { display: none; margin-top: 4px; margin-bottom: 16px; color: #162A53; font-size: 14px; }
+  #output      {
+    width: 100%; box-sizing: border-box; padding: 10px;
+    border: 1px solid #ccc; border-radius: 4px; resize: vertical;
+  }
+  .copy-btn {
+  background-color: #89A84F; /* Green */
+  color: white;
+}
+.copy-btn:hover {
+  background-color: #7A9645; /* Darker green on hover */
+}
+.pdf-downloads {
+  margin-top: 30px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+.pdf-downloads h4 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 18px;
+  color: #004990;
+  display: flex;
+  align-items: center;
+}
+.resource-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.resource-card {
+  display: block;
+  background: #F9F9F9;
+  padding: 12px 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.resource-card:hover {
+  background: #EDF7F1;
+  border-color: #89A84F;
+}
+.resource-title {
+  font-weight: 600
+  color: #004990;
+  margin-bottom: 4px;
+}
+.resource-desc {
+  font-size: 14px;
+  color: #555;
+}
+
+.preview-toggle {
+  display: inline-block;
+  font-weight: 700;
+  color: #89A84F;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 10px;
+  margin-bottom: 8px;
+}
+
+.pdf-preview {
+  display: none;
+  height: 500px;
+  margin-top: 10px;
+}
+
+.pdf-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: none;
+}
+.preview-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  margin-bottom: 8px;
+}
+
+.download-link {
+  font-weight: 700;
+  color: #004990;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.download-pdf {
+  font-weight: 700;
+  color: #004990;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 12px;
+}
+.useful-links {
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.useful-links li {
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.useful-links a {
+  color: #004990;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.useful-links a:hover {
+  text-decoration: underline;
+}
+
+.copy-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Left-aligns the button and copied text */
+}
+
+.copied-msg {
+  font-size: 13px;
+  color: #89A84F;
+  margin-top: 4px;
+
+</style>
+
+<script>
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.blurbs-section').forEach(s => s.style.display = 'none');
+      t.classList.add('active');
+      document.getElementById(t.dataset.tab).style.display = 'block';
+      if (t.dataset.tab === 'standard') populateBlurb();
+    });
+  });
+
+const blurbs = {
+  general: [
+    `Join global leaders, professionals, families, and advocates at the 2025 Virtual Call to Action to Change Child Welfare Conference. This international gathering connects communities, elevates lived experiences, and promotes actionable ideas focused on strengthening family well-being and transforming child welfare practices worldwide.<br><br>This event offers practical strategies, thought-provoking dialogues, and direct engagement opportunities with experts, policy influencers, and families leading change efforts globally. Register now to actively participate in reshaping child welfare and ensuring meaningful outcomes for children and families everywhere.`,
+    `Your participation in the 2025 Virtual Call to Action to Change Child Welfare Conference is critical in driving systemic transformation. Engage directly with community leaders, practitioners, and individuals with firsthand experience through impactful discussions and workshops dedicated to family-centered solutions and innovative child welfare practices.<br><br>
+Secure your registration today to join an urgent and collaborative effort focused on creating lasting impacts for families and children globally. Your voice and perspective matter in this crucial international movement.`,
+    `Actively participate in reshaping the future of child welfare at the 2025 Virtual Call to Action to Change Child Welfare Conference. This global event connects practitioners, communities, researchers, and families committed to practical solutions, restorative practices, and family-strengthening strategies.<br><br>
+Sessions prioritize actionable insights and real-world applications, directly benefiting your community's work with children and families. Early registration is encouraged—reserve your place and contribute to essential global change efforts.
+
+`,
+    `The 2025 Virtual Call to Action to Change Child Welfare Conference gathers an international community dedicated to systemic transformation. Participants will connect, share expertise, and collaborate on strategies that are practical, impactful, and rooted in community experiences.<br><br>
+Be part of an international effort to drive meaningful improvements in child welfare practice and family support. Register today to engage directly in this powerful global dialogue.
+
+`,
+    `Take part in an essential global movement at the 2025 Virtual Call to Action to Change Child Welfare Conference, where communities, families, advocates, and professionals unite around impactful solutions in child welfare. The conference is designed to be practical, inclusive, and transformative, with deep dives into prevention, advocacy, and restorative approaches.<br><br>
+Early registration ensures your involvement in these crucial conversations. Don’t miss this opportunity to influence positive change for children, families, and communities worldwide.
+
+`
+  ],
+
+  sessions: [
+    `Participate in dynamic Skill-Building Sessions at the 2025 Virtual Call to Action to Change Child Welfare Conference. These interactive 90-minute workshops provide practical tools and real-world strategies essential for professionals and communities working directly with children, families, and communities.`,
+    `The 2025 Virtual Call to Action to Change Child Welfare Conference includes interactive Skill-Building Sessions designed specifically to enhance practical skills for supporting children, families, and communities effectively. Led by practitioners and experts with lived experience, these sessions offer actionable strategies your community or organization can immediately apply.`,
+    `Gain essential, practical skills at the 2025 Virtual Call to Action to Change Child Welfare Conference through interactive Skill-Building Sessions. Each session equips participants with concrete tools, enhancing their ability to support children, families, and communities and navigate complex challenges in child welfare and community contexts.`,
+    `Register early for interactive Skill-Building Sessions at the 2025 Virtual Call to Action to Change Child Welfare Conference. Sessions focus on skills relevant to practitioners, community workers, social workers, and advocates, ensuring participants gain actionable strategies and immediate applications for their local contexts.`,
+    `Skill-Building Sessions at the 2025 Virtual Call to Action to Change Child Welfare Conference provide interactive, practical training that supports impactful child and family welfare practices. Facilitated by experienced leaders, each session ensures participants gain hands-on experience with tools directly applicable to their daily work.`
+  ],
+
+  ceus: [
+    `Earn Continuing Education Units (CEUs) while participating in the 2025 Virtual Call to Action to Change Child Welfare Conference. This event provides access to professionally accredited sessions designed to enhance practice skills and offer innovative strategies directly relevant to your work with children, families, and communities.
+`,
+    `Advance your professional development with easily accessible CEU sessions at the 2025 Virtual Call to Action to Change Child Welfare Conference. Accredited by NASW, these sessions deliver practical tools and evidence-based insights you can immediately apply in your community or organization.<br><br>
+Registration is simple, cost-effective, and provides flexible options for earning credits. Reserve your place now and strengthen your professional practice while contributing to global child welfare improvements.
+`,
+    `The 2025 Virtual Call to Action to Change Child Welfare Conference offers extensive opportunities for earning CEUs. Participate in skill-based sessions on family support, trauma-informed practices, and restorative justice, each clearly marked for CEU accreditation.<br><br>
+Ensure your ongoing professional growth through meaningful learning experiences.
+`,
+    `Join professionals worldwide at the 2025 Virtual Call to Action to Change Child Welfare Conference and easily fulfill CEU requirements. Each CEU session provides relevant, applicable insights into family support and innovative child welfare practices.<br><br>
+CEU accreditation is straightforward and cost-effective, enhancing your professional skills and impact simultaneously.
+`,
+    `Take advantage of the extensive CEU offerings at the 2025 Virtual Call to Action to Change Child Welfare Conference, featuring expertly designed sessions relevant to social work, counseling, and family therapy. Each accredited session focuses on practical knowledge and innovative strategies that directly benefit your professional practice.
+`
+  ],
+
+  group: [
+    `Organizations are encouraged to register as a group for the 2025 Virtual Call to Action to Change Child Welfare Conference. Group registration offers significant discounts and provides teams access to hundreds of sessions filled with actionable strategies and global expertise to strengthen family support practices.<br><br>
+Early registration maximizes group benefits, ensuring your organization can fully engage in this transformative global event.
+`,
+    `Register your team for the 2025 Virtual Call to Action to Change Child Welfare Conference, a global event dedicated to innovative child welfare solutions. Group registration offers special discounts and convenient, flexible participation for teams of all shapes and sizes.<br><br>
+Take advantage of early-bird rates to involve your entire organization in impactful learning opportunities.
+`,
+    `Enhance your organization's capacity by registering as a group for the 2025 Virtual Call to Action to Change Child Welfare Conference. Teams gain access to practical sessions, international insights, and resources to directly improve child, family, and community support and child welfare practices.<br><br>
+Early group registration unlocks significant discounts—register now to secure maximum benefits for your organization.
+`,
+    `Facilitate meaningful professional growth within your team by participating as a group in the 2025 Virtual Call to Action to Change Child Welfare Conference. Group discounts make it affordable to include multiple staff members, who will gain practical knowledge, global perspectives, and actionable tools to strengthen your organization's practices and insights.`,
+    `Group registrations for the 2025 Virtual Call to Action to Change Child Welfare Conference offer organizations impactful ways to invest in staff development and community capacity-building. Benefit from significant discounts and ensure your team gains actionable insights, skills, and resources from international leaders and practitioners in child welfare.`
+  ]
+};
+
+
+  function populateBlurb() {
+    const type = document.getElementById('typeSelect').value;
+    const opts = blurbs[type];
+    const idx = Math.floor(Math.random() * opts.length);
+    const main = opts[idx], others = opts.filter((_,i)=>i!==idx);
+    document.getElementById('blurb-container').innerHTML = `
+      <div class="blurb-card">
+        <p>${main}</p>
+        <div class="actions">
+<div class="copy-wrapper">
+  <button class="copy-btn" onclick="copyBlurb(this)">Copy</button>
+  <div class="copied-msg" style="display:none;">Copied!</div>
+</div>
+<button onclick="shareLinkedIn(this)">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/LinkedIn_icon.svg/1024px-LinkedIn_icon.svg.png" alt="LinkedIn" style="height:16px; vertical-align:middle; margin-right:6px;">
+  Share on LinkedIn
+</button>
+<button onclick="shareFacebook(this)">
+  <img src="https://cdn-icons-png.freepik.com/256/15707/15707884.png?semt=ais_hybrid" alt="Facebook" style="height:16px; vertical-align:middle; margin-right:6px;">
+  Share on Facebook
+</button>
+        </div>
+        <div class="instruction" style="display:none;">
+          <span class="instruction-text">Copied!</span>
+          <a class="instruction-link" target="_blank"></a>
+        </div>
+      </div>
+      <div class="show-more"><button onclick="toggleMore(this)">Show More</button></div>
+      <div id="more-blurbs" style="display:none;">
+        ${others.map(b => `
+          <div class="blurb-card">
+            <p>${b}</p>
+<div class="actions">
+<div class="copy-wrapper">
+  <button class="copy-btn" onclick="copyBlurb(this)">Copy</button>
+  <div class="copied-msg" style="display:none;">Copied!</div>
+</div>
+  <button onclick="shareLinkedIn(this)">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/LinkedIn_icon.svg/1024px-LinkedIn_icon.svg.png" alt="LinkedIn" style="height:16px; vertical-align:middle; margin-right:6px;">
+    Share on LinkedIn
+  </button>
+  <button onclick="shareFacebook(this)">
+    <img src="https://cdn-icons-png.freepik.com/256/15707/15707884.png?semt=ais_hybrid" alt="Facebook" style="height:16px; vertical-align:middle; margin-right:6px;">
+    Share on Facebook
+  </button>
+</div>
+            <div class="instruction" style="display:none;">
+              <span class="instruction-text">Copied!</span>
+              <a class="instruction-link" target="_blank"></a>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }
+  document.getElementById('typeSelect').addEventListener('change', populateBlurb);
+  populateBlurb();
+
+  function toggleMore(btn) {
+    const more = document.getElementById('more-blurbs');
+    const showing = more.style.display === 'block';
+    more.style.display = showing ? 'none' : 'block';
+    btn.textContent = showing ? 'Show More' : 'Show Less';
+  }
+
+function copyBlurb(btn) {
+  const text = btn.closest('.blurb-card').querySelector('p').textContent;
+  navigator.clipboard.writeText(text);
+
+  const msg = btn.parentElement.querySelector('.copied-msg');
+  msg.style.display = 'block';
+
+  setTimeout(() => {
+    msg.style.display = 'none';
+  }, 2000);
+}
+
+
+  function shareLinkedIn(btn) {
+    const card = btn.closest('.blurb-card');
+    const instr = card.querySelector('.instruction');
+    const link = instr.querySelector('.instruction-link');
+    link.href = 'https://www.linkedin.com/sharing/share-offsite/?url=https://www.ctaconference.org';
+    link.textContent = 'Click here to share this post on LinkedIn and paste your message';
+    instr.style.display = 'block';
+    showToast("Copied!");
+  }
+
+  function shareFacebook(btn) {
+    const card = btn.closest('.blurb-card');
+    const instr = card.querySelector('.instruction');
+    const link = instr.querySelector('.instruction-link');
+    link.href = 'https://www.facebook.com/sharer/sharer.php?u=https://www.ctaconference.org';
+    link.textContent = 'Click here to share this post on Facebook and paste your message';
+    instr.style.display = 'block';
+    showToast("Copied!");
+  }
+
+  function showToast(msg="Copied!") {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1500);
+  }
+
+  async function generateCopy() {
+    const custom = document.getElementById('custom').value.trim();
+    const systemPrompt = `
+You are writing a concise blurb promoting the 2025 Virtual Call to Action to Change Child Welfare Conference. Promoting the conference generally is ultimately the main message. The message doesn't necessarily need to promote registration, specifically. 
+These blurbs will be generated by members of the International Association of Family Support Networks (IAFSN) who is partnering with the conference.
+Remember, this blurb will be used by IAFSN members to promote the conference to their own networks/centers.
+Always spell out International Association of Family Support Networks before using the acronym. Avoid saying International Association of Family Support Networks more than once in the same sentence or the blurb. 
+Always frame it: IAFSN is partnering with the conference.
+Try to include:
+• “transform child welfare systems”
+• “children, families, and communities”
+Only once each.
+Use confident, engaging language, but avoid exaggerated claims. Keep tone professional yet inviting.
+Never say anything controversial. Be mindful of sensitive terms.
+Whenever describing how this event will act upon child welfare systems, use the word "transform." 
+If the user’s note isn’t clearly related to themselves, IAFSN, or the conference, ignore it and just generate the default blurb.
+`;
+    const userPrompt = custom
+      ? `Try to incorporate this note into the blurb: "${custom}"`
+      : `Generate a default blurb.`;
+
+    document.getElementById('output').value = 'Generating…';
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer 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'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userPrompt }
+        ],
+        temperature: 0.85,
+        max_tokens: 250
+      })
+    });
+    const data = await res.json();
+    document.getElementById('output').value =
+      data.choices?.[0]?.message?.content?.trim() || 'Error generating text.';
+  }
+
+function copyText() {
+  const txt = document.getElementById('output').value;
+  if (!txt) return;
+
+  navigator.clipboard.writeText(txt).then(() => {
+    // Find the "Copied!" message container for the Message Generator section and show it
+    const msg = document.getElementById('copyMsgBuilder');
+    msg.style.display = 'block'; // Show the "Copied!" message
+
+    // Hide the "Copied!" message after 2 seconds
+    setTimeout(() => {
+      msg.style.display = 'none'; 
+    }, 2000);
+  });
+}
+
+
+  document.getElementById('generateBtn').onclick = generateCopy;
+  document.getElementById('copyBtn').onclick = copyText;
+function togglePreview(id, toggleEl) {
+  const preview = document.getElementById(id);
+  const downloadLink = toggleEl.nextElementSibling;
+  const isVisible = preview.style.display === 'block';
+  preview.style.display = isVisible ? 'none' : 'block';
+  toggleEl.textContent = isVisible ? 'View PDF Preview' : 'Hide PDF Preview';
+  downloadLink.style.display = isVisible ? 'none' : 'inline-block';
+}
+
+
+</script>
