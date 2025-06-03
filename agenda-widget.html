@@ -402,6 +402,17 @@
     margin-left: 0 !important;
     display: block;
   }
+  .speaker-bio-overlay {
+    position: fixed;
+    max-width: 300px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    z-index: 60;
+    pointer-events: none;
+  }
   .timezone-row label[for="timezone-select"] {
     margin-bottom: 0.25em !important;
     margin-right: 0 !important;
@@ -411,6 +422,8 @@
     </style>
 </head>
 <body>
+<div id="speaker-bio-overlay" class="speaker-bio-overlay hidden">
+</div>
 <div class="bg-gradient-to-br from-blue-50 to-indigo-50">
             <main class="container mx-auto px-4 py-8">
 <div class="timezone-row flex items-center justify-between mb-8">
@@ -3114,6 +3127,7 @@ function searchSessions(query) {
             const noResults = document.getElementById('no-results');
             const resetFilters = document.getElementById('reset-filters');
             const toast = document.getElementById('toast');
+            const speakerBioOverlay = document.getElementById('speaker-bio-overlay');
             const addToScheduleBtn = document.getElementById('add-to-schedule');
 const copySessionDetailsBtn = document.getElementById('copy-session-details');
 const themeSelect = document.getElementById('theme-select');
@@ -3672,8 +3686,25 @@ function positionModalBelowCard(card) {
         modalPanel.style.top = top + 'px';
         modalPanel.style.left = '50%';
         modalPanel.style.transform = 'translateX(-50%)';
-        modalPanel.classList.remove('modal-enter');
+    modalPanel.classList.remove('modal-enter');
     }, 10);
+}
+
+function positionSpeakerBio(e) {
+    const padding = 10;
+    let x = e.clientX + padding;
+    let y = e.clientY + padding;
+    speakerBioOverlay.style.left = x + 'px';
+    speakerBioOverlay.style.top = y + 'px';
+    const rect = speakerBioOverlay.getBoundingClientRect();
+    if (rect.right > window.innerWidth - padding) {
+        x = window.innerWidth - rect.width - padding;
+    }
+    if (rect.bottom > window.innerHeight - padding) {
+        y = window.innerHeight - rect.height - padding;
+    }
+    speakerBioOverlay.style.left = x + 'px';
+    speakerBioOverlay.style.top = y + 'px';
 }
 // Open session modal
 function openSessionModal(sessionId, cardOverride) {
@@ -3725,7 +3756,7 @@ session.speakers.forEach(speaker => {
             </svg>
         </div>
         <div>
-            <div class="font-medium text-gray-800">${speaker.name}</div>
+            <div class="font-medium text-gray-800 speaker-name">${speaker.name}</div>
             <div class="text-sm text-gray-500">
                 ${speaker.role}${speaker.company ? ', ' + speaker.company : ''}
             </div>
@@ -3737,6 +3768,20 @@ session.speakers.forEach(speaker => {
         </div>
     `;
     speakersDiv.appendChild(speakerEl);
+    const nameEl = speakerEl.querySelector('.speaker-name');
+    if (nameEl) {
+        nameEl.dataset.bio = speaker.bio || '';
+        nameEl.addEventListener('mouseenter', function(e) {
+            if (!this.dataset.bio) return;
+            speakerBioOverlay.textContent = this.dataset.bio;
+            speakerBioOverlay.classList.remove('hidden');
+            positionSpeakerBio(e);
+        });
+        nameEl.addEventListener('mousemove', positionSpeakerBio);
+        nameEl.addEventListener('mouseleave', function() {
+            speakerBioOverlay.classList.add('hidden');
+        });
+    }
 });
 
     } else {
@@ -3796,6 +3841,7 @@ closeModal.addEventListener('click', function() {
         modalPanel.style.top = '';
         modalPanel.style.left = '';
         modalPanel.style.transform = '';
+        speakerBioOverlay.classList.add('hidden');
     }, 300);
 });
 
@@ -3809,6 +3855,7 @@ modal.addEventListener('click', function(e) {
             modalPanel.style.top = '';
             modalPanel.style.left = '';
             modalPanel.style.transform = '';
+            speakerBioOverlay.classList.add('hidden');
         }, 300);
     }
 });
