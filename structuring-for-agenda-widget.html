@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CSV to JS Object Formatter (Copyable Output with Quote Replacement)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    input, button {
+      padding: 8px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    textarea {
+      width: 100%;
+      height: 500px;
+      margin-top: 10px;
+      font-family: monospace;
+      white-space: pre;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .indicator {
+      display: inline-block;
+      margin-left: 8px;
+      color: green;
+      font-size: 0.9em;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .show {
+      opacity: 1;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    .warning {
+      color: orange;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>CSV to JS Object Formatter (Copyable Output with Quote Replacement)</h2>
+    <label for="sessionFileInput">Select Session File (CSV):</label>
+    <input type="file" id="sessionFileInput" accept=".csv" /><br/>
+    <label for="speakerFileInput">Select Speaker File (CSV):</label>
+    <input type="file" id="speakerFileInput" accept=".csv" /><br/>
+    <button id="processBtn">Process Both CSVs</button>
+    <button id="copyBtn">Copy Formatted Output</button>
+    <span id="copyIndicator" class="indicator">Copied</span>
+    <button id="copyErrBtn">Copy Errors</button>
+    <span id="copyErrIndicator" class="indicator">Copied</span>
+    <textarea id="outputArea" placeholder="Errors and formatted output will appear here"></textarea>
+  </div>
+
+  <script>
+    /**
+     * Split one “logical CSV row” into an array of fields,
+     * respecting quotes so that commas inside quotes are not treated as separators.
+     */
+    function parseCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+            // double quote inside quoted field ⇒ literal "
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current);
+      return result;
+    }
+
+    /**
+     * Given raw CSV text, reconstruct “logical” rows by joining physical lines
+     * that belong to a quoted field. We count quotes, and only when the total
+     * is even do we finalize a row.
+     */
+    function splitIntoLogicalRows(rawText) {
+      const physicalLines = rawText.split(/\r\n|\n/);
+      const logicalRows = [];
+      let buffer = '';
+      let quoteCount = 0;
+
+      for (let i = 0; i < physicalLines.length; i++) {
+        const line = physicalLines[i];
+        if (buffer === '') {
+          buffer = line;
+          quoteCount = (line.match(/"/g) || []).length;
+        } else {
+          buffer += '\n' + line;
+          quoteCount += (line.match(/"/g) || []).length;
+        }
+        // When quoteCount is even, row is complete
+        if (quoteCount % 2 === 0) {
+          logicalRows.push(buffer);
+          buffer = '';
+          quoteCount = 0;
+        }
+      }
+      // If leftover in buffer, push as-is
+      if (buffer.trim() !== '') {
+        logicalRows.push(buffer);
+      }
+      return logicalRows.filter(r => r.trim() !== '');
+    }
+
+    /**
+     * Parse "MM/DD/YYYY hh:mm:ss AM/PM" into { year, month, day, hour, minute, second }.
+     * Returns null if format is invalid.
+     */
+    function parseDateTimeString(dtStr) {
+      const trimmed = dtStr.trim();
+      const parts = trimmed.split(' ');
+      if (parts.length < 3) return null;
+      const datePart = parts[0];
+      const timePart = parts[1];
+      const ampm = parts[2].toUpperCase();
+      const datePieces = datePart.split('/');
+      const timePieces = timePart.split(':');
+      if (datePieces.length !== 3 || timePieces.length !== 3) return null;
+      const [month, day, year] = datePieces.map(Number);
+      const [hourRaw, minuteRaw, secondRaw] = timePieces.map(Number);
+      if ([month, day, year, hourRaw, minuteRaw, secondRaw].some(v => isNaN(v))) return null;
+      let hour = hourRaw;
+      if (ampm === 'PM' && hour < 12) hour += 12;
+      if (ampm === 'AM' && hour === 12) hour = 0;
+      return { year, month, day, hour, minute: minuteRaw, second: secondRaw };
+    }
+
+    function formatDate(dt) {
+      const monthNames = [
+        'January','February','March','April','May','June',
+        'July','August','September','October','November','December'
+      ];
+      return `${monthNames[dt.month - 1]} ${dt.day}, ${dt.year}`;
+    }
+
+    function formatTime(dt) {
+      let hour12 = dt.hour % 12;
+      if (hour12 === 0) hour12 = 12;
+      const minute = dt.minute.toString().padStart(2, '0');
+      const period = dt.hour < 12 ? 'AM' : 'PM';
+      return `${hour12}:${minute} ${period}`;
+    }
+
+    function formatTimeRange(startDt, endDt) {
+      return `${formatTime(startDt)} - ${formatTime(endDt)}`;
+    }
+
+    function formatDateTimeISO(dt) {
+      const mm = dt.month.toString().padStart(2, '0');
+      const dd = dt.day.toString().padStart(2, '0');
+      const hh = dt.hour.toString().padStart(2, '0');
+      const mi = dt.minute.toString().padStart(2, '0');
+      const ss = dt.second.toString().padStart(2, '0');
+      return `${dt.year}-${mm}-${dd}T${hh}:${mi}:${ss}`;
+    }
+
+    function formatDateValue(dt) {
+      const abbr = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+      return `${abbr[dt.month - 1]}${dt.day}`;
+    }
+
+    // Will hold the final formatted output (wrapped) for the Copy button
+    let lastFormattedOutput = '';
+    // Will hold just the error text for the Copy Errors button
+    let lastErrors = '';
+
+    document.getElementById('processBtn').addEventListener('click', function () {
+      const sessionInput = document.getElementById('sessionFileInput');
+      const speakerInput = document.getElementById('speakerFileInput');
+      const outputArea = document.getElementById('outputArea');
+      outputArea.value = '';
+      lastFormattedOutput = '';
+      lastErrors = '';
+
+      if (!sessionInput.files.length || !speakerInput.files.length) {
+        outputArea.value = 'ERROR: Both Session and Speaker CSV files must be selected.';
+        lastErrors = outputArea.value;
+        return;
+      }
+
+      const errors = [];
+
+      // 1) Read and parse Session File
+      const sessionReader = new FileReader();
+      sessionReader.onload = function (e) {
+        const rawSessionText = e.target.result;
+        const sessionRowsText = splitIntoLogicalRows(rawSessionText);
+
+        if (sessionRowsText.length < 2) {
+          const err = 'ERROR: Session CSV contains fewer than 2 logical rows (no data rows).';
+          outputArea.value = err;
+          lastErrors = err;
+          return;
+        }
+
+        // Extract session headers
+        const rawSessionHeaders = parseCSVLine(sessionRowsText[0]).map(h => h.trim());
+        const normSessionHeaders = rawSessionHeaders.map(h => h.toLowerCase());
+
+        // Required columns in Session File
+const requiredSessionCols = [
+  'session id', // <-- add this line
+  'session code',
+  'session start date/time',
+  'end date/time',
+  'session name',
+  'description',
+  'presentation type',
+  'category',
+  '2024 cta tags',
+  'speaker code'
+];
+        const missingSessionCols = requiredSessionCols.filter(col => !normSessionHeaders.includes(col));
+        if (missingSessionCols.length) {
+          errors.push(
+            `ERROR: Session file is missing required columns:\n  • ${missingSessionCols.join(', ')}\n\n` +
+            `Available columns are:\n  • ${rawSessionHeaders.join(', ')}`
+          );
+          outputArea.value = errors.join('\n');
+          lastErrors = errors.join('\n');
+          return;
+        }
+
+        // Build array of session row objects, but skip overwriting description if duplicate
+        const sessionRows = sessionRowsText.slice(1).map((rowText, idx) => {
+          const fields = parseCSVLine(rowText);
+          const obj = {};
+          normSessionHeaders.forEach((h, i) => {
+            if (h === 'description' && obj.hasOwnProperty('description')) {
+              // Skip any duplicate "description" columns after the first
+              return;
+            }
+            let val = fields[i] !== undefined ? fields[i].trim() : '';
+            if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
+              val = val.slice(1, -1).replace(/""/g, '"');
+            }
+            obj[h] = val;
+          });
+          return obj;
+        });
+
+        // 2) Read and parse Speaker File
+        const speakerReader = new FileReader();
+        speakerReader.onload = function (ev) {
+          const rawSpeakerText = ev.target.result;
+          const speakerRowsText = splitIntoLogicalRows(rawSpeakerText);
+
+          if (speakerRowsText.length < 2) {
+            const err = 'ERROR: Speaker CSV contains fewer than 2 logical rows (no data rows).';
+            outputArea.value = err;
+            lastErrors = err;
+            return;
+          }
+
+          const rawSpeakerHeaders = parseCSVLine(speakerRowsText[0]).map(h => h.trim());
+          const normSpeakerHeaders = rawSpeakerHeaders.map(h => h.toLowerCase());
+
+          // Required columns in Speaker File
+          const requiredSpeakerCols = [
+            'code',
+            'session code',
+            'first name',
+            'last name',
+            'title'
+          ];
+          const missingSpeakerCols = requiredSpeakerCols.filter(col => !normSpeakerHeaders.includes(col));
+          if (missingSpeakerCols.length) {
+            errors.push(
+              `ERROR: Speaker file is missing required columns:\n  • ${missingSpeakerCols.join(', ')}\n\n` +
+              `Available columns are:\n  • ${rawSpeakerHeaders.join(', ')}`
+            );
+            outputArea.value = errors.join('\n');
+            lastErrors = errors.join('\n');
+            return;
+          }
+
+          // Build array of speaker row objects
+          const speakerRows = speakerRowsText.slice(1).map((rowText, idx) => {
+            const fields = parseCSVLine(rowText);
+            const obj = {};
+            normSpeakerHeaders.forEach((h, i) => {
+              let val = fields[i] !== undefined ? fields[i].trim() : '';
+              if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
+                val = val.slice(1, -1).replace(/""/g, '"');
+              }
+              obj[h] = val;
+            });
+            return obj;
+          });
+
+          // 3) Build lookup: speakersMap[sessionCode][speakerCode] = { name, role }
+const speakersMap = {};
+speakerRows.forEach((row, idx) => {
+  const rowNum = idx + 2;
+  const sessionCode = (row['session code'] || '').trim();
+  const speakerCode = (row['code'] || '').trim();
+  const firstName = row['first name'] || '';
+  const lastName = row['last name'] || '';
+  const role = row['title'] || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  // NEW: Extract extra fields
+  const company = row['company name'] || '';
+  const bio = row['biography'] || '';
+  const linkedin = row['linkedin url'] || '';
+  const x = row['x url'] || '';
+  const facebook = row['facebook url'] || '';
+
+  if (!sessionCode) {
+    errors.push(`WARNING: Speaker row ${rowNum}: “Session Code” is empty.`);
+  }
+  if (!speakerCode) {
+    errors.push(`WARNING: Speaker row ${rowNum}: “Code” (Speaker Code) is empty.`);
+  }
+  if (sessionCode && speakerCode) {
+    if (!speakersMap[sessionCode]) speakersMap[sessionCode] = {};
+    speakersMap[sessionCode][speakerCode] = {
+      name: fullName,
+      role,
+      company,
+      bio,
+      linkedin,
+      x,
+      facebook
+    };
+  }
+});
+
+          // 4) Build the final JS objects by iterating over sessionRows
+          let bodyOutput = ''; // will hold the objects only
+          sessionRows.forEach((row, idx) => {
+            const rowNum = idx + 2;
+            const sessionCode = (row['session code'] || '').trim();
+              const sessionId = (row['session id'] || '').trim(); // <-- ADD THIS
+
+            // Validate session code
+            if (!sessionCode) {
+              errors.push(`ERROR: Session row ${rowNum}: “Session Code” is empty.`);
+            }
+
+            // Validate session name, replacing any double quote with apostrophe
+            let sessionNameRaw = row['session name'] || '';
+            let sessionName = sessionNameRaw.replace(/"/g, "'"); 
+            if (!sessionNameRaw) {
+              errors.push(`ERROR: Session row ${rowNum}: “Session Name” is empty.`);
+            }
+
+            // Validate and parse date/time
+            const startRaw = row['session start date/time'] || '';
+            const endRaw = row['end date/time'] || '';
+            let startDtObj = null, endDtObj = null;
+
+            if (!startRaw) {
+              errors.push(`ERROR: Session row ${rowNum}: “Session Start Date/Time” is empty.`);
+            } else {
+              startDtObj = parseDateTimeString(startRaw);
+              if (!startDtObj) {
+                const parts = startRaw.split(' ');
+                errors.push(
+                  `ERROR: Session row ${rowNum}: couldn’t parse “Session Start Date/Time”.\n` +
+                  `  Raw value: "${startRaw}"\n` +
+                  `  Split parts: [${parts.map(p => `"${p}"`).join(', ')}]\n` +
+                  `  Expected format: MM/DD/YYYY hh:mm:ss AM/PM`
+                );
+              }
+            }
+
+            if (!endRaw) {
+              errors.push(`WARNING: Session row ${rowNum}: “End Date/Time” is empty.`);
+            } else {
+              endDtObj = parseDateTimeString(endRaw);
+              if (!endDtObj) {
+                const partsE = endRaw.split(' ');
+                errors.push(
+                  `ERROR: Session row ${rowNum}: couldn’t parse “End Date/Time”.\n` +
+                  `  Raw value: "${endRaw}"\n` +
+                  `  Split parts: [${partsE.map(p => `"${p}"`).join(', ')}]\n` +
+                  `  Expected format: MM/DD/YYYY hh:mm:ss AM/PM`
+                );
+              }
+            }
+
+            const formattedDate = startDtObj ? formatDate(startDtObj) : '';
+            const formattedDateTime = startDtObj
+              ? `${formatDateTimeISO(startDtObj)}-06:00`
+              : '';
+            const formattedDateValue = startDtObj
+              ? formatDateValue(startDtObj)
+              : '';
+            const formattedTime =
+              startDtObj && endDtObj
+                ? formatTimeRange(startDtObj, endDtObj)
+                : startDtObj
+                ? formatTime(startDtObj)
+                : '';
+
+            // Tags from "2024 cta tags"
+            const rawTags = row['2024 cta tags'] || '';
+            const tags = rawTags
+              ? rawTags.split(',').map(t => t.trim()).filter(t => t !== '')
+              : [];
+            if (tags.length > 6) {
+              errors.push(
+                `WARNING: Session row ${rowNum}: “2024 CTA Tags” has ${tags.length} tags (expected 0–6).`
+              );
+            }
+
+            // Speaker codes from "speaker code"
+            const rawSpeakerCodes = row['speaker code'] || '';
+            const speakerCodes = rawSpeakerCodes
+              ? rawSpeakerCodes.split(',').map(c => c.trim()).filter(c => c !== '')
+              : [];
+            if (speakerCodes.length === 0) {
+              errors.push(`WARNING: Session row ${rowNum}: “Speaker Code” column is empty (no speakers).`);
+            }
+            if (speakerCodes.length > 7) {
+              errors.push(`WARNING: Session row ${rowNum}: “Speaker Code” has ${speakerCodes.length} codes (max 7).`);
+            }
+
+            // Collect speaker objects (name+role) via speakersMap
+            const speakersArr = [];
+            speakerCodes.forEach(code => {
+              if (!sessionCode) return; // already flagged above
+              if (!speakersMap[sessionCode]) {
+                errors.push(
+                  `ERROR: Session row ${rowNum}: no entries in Speaker File for Session Code "${sessionCode}".`
+                );
+                return;
+              }
+              if (!speakersMap[sessionCode][code]) {
+                errors.push(
+                  `ERROR: Session row ${rowNum}: Speaker Code "${code}" not found for Session "${sessionCode}".\n` +
+                  `  Available speaker codes for this session: [${Object.keys(speakersMap[sessionCode]).join(', ')}]`
+                );
+                return;
+              }
+              const info = speakersMap[sessionCode][code];
+              if (!info.name) {
+                errors.push(`WARNING: Session row ${rowNum}: Speaker Code "${code}" has no name in Speaker File.`);
+              }
+              if (!info.role) {
+                errors.push(`WARNING: Session row ${rowNum}: Speaker Code "${code}" ("${info.name}") has no Title/Role in Speaker File.`);
+              }
+let speakerName = (info.name || '').replace(/"/g, "'"); // Replace all " with '
+let company = (info.company || '').replace(/"/g, "'");
+let bio = (info.bio || '').replace(/"/g, "'");
+let linkedin = (info.linkedin || '').replace(/"/g, "'");
+let x = (info.x || '').replace(/"/g, "'");
+let facebook = (info.facebook || '').replace(/"/g, "'");
+speakersArr.push({
+  name: speakerName,
+  role: (info.role || '').replace(/"/g, "'"),
+  company: company,
+  bio: bio,
+  linkedin: linkedin,
+  x: x,
+  facebook: facebook
+});            });
+
+            // Construct the JS object literal
+            bodyOutput += '   {\n';
+              bodyOutput += `       id: "${sessionId}",\n`; // <-- ADD THIS
+            bodyOutput += `       title: "${sessionName}",\n`;
+let descriptionRaw = row['description'] || '';
+let description = descriptionRaw.replace(/"/g, "'"); // Replace all " with '
+bodyOutput += `       description: "${description}",\n`;
+            bodyOutput += `       date: "${formattedDate}",\n`;
+            bodyOutput += `       time: "${formattedTime}",\n`;
+            bodyOutput += `       datetime: "${formattedDateTime}",\n`;
+            bodyOutput += `       dateValue: "${formattedDateValue}",\n`;
+            bodyOutput += `       type: "${row['presentation type'] || ''}",\n`;
+            bodyOutput += `       theme: "${row['category'] || ''}",\n`;
+
+            if (tags.length) {
+              bodyOutput +=
+                '       tags: [' + tags.map(t => `"${t}"`).join(', ') + '],\n';
+            } else {
+              bodyOutput += '       tags: [],\n';
+            }
+
+            if (speakersArr.length) {
+              bodyOutput += '       speakers: [\n';
+speakersArr.forEach((sp, i) => {
+  bodyOutput += `           { name: "${sp.name}", role: "${sp.role}", company: "${sp.company}", bio: "${sp.bio}", linkedin: "${sp.linkedin}", x: "${sp.x}", facebook: "${sp.facebook}" }${i < speakersArr.length - 1 ? ',' : ''}\n`;
+});              bodyOutput += '       ]\n';
+            } else {
+              bodyOutput += '       speakers: []\n';
+            }
+
+            bodyOutput += idx < sessionRows.length - 1 ? '   },\n' : '   }\n';
+          });
+
+          // Wrap with const sessions = [ ... ];
+          const wrappedOutput = 'const sessions = [\n' + bodyOutput + '];';
+          lastFormattedOutput = wrappedOutput;
+          lastErrors = errors.join('\n');
+
+          // 5) Display errors (if any), then the formatted output
+          if (errors.length) {
+            outputArea.value = errors.join('\n') + '\n\n' + wrappedOutput;
+          } else {
+            outputArea.value = wrappedOutput;
+          }
+        };
+
+        speakerReader.readAsText(speakerInput.files[0]);
+      };
+
+      sessionReader.readAsText(sessionInput.files[0]);
+    });
+
+    // Copy button functionality for formatted output
+    document.getElementById('copyBtn').addEventListener('click', function () {
+      if (!lastFormattedOutput) return;
+      const indicator = document.getElementById('copyIndicator');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(lastFormattedOutput).then(() => {
+          indicator.classList.add('show');
+          setTimeout(() => indicator.classList.remove('show'), 1000);
+        });
+      } else {
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.value = lastFormattedOutput;
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempTextarea);
+        indicator.classList.add('show');
+        setTimeout(() => indicator.classList.remove('show'), 1000);
+      }
+    });
+
+    // Copy button functionality for error messages
+    document.getElementById('copyErrBtn').addEventListener('click', function () {
+      if (!lastErrors) return;
+      const indicator = document.getElementById('copyErrIndicator');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(lastErrors).then(() => {
+          indicator.classList.add('show');
+          setTimeout(() => indicator.classList.remove('show'), 1000);
+        });
+      } else {
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.value = lastErrors;
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempTextarea);
+        indicator.classList.add('show');
+        setTimeout(() => indicator.classList.remove('show'), 1000);
+      }
+    });
+  </script>
+</body>
+</html>
