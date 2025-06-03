@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        
+                #centerButton {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #162A53;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+                #resetButton {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #f58c35;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #centerButton:hover {
+            background-color: #1f3a76;
+        }
+        #resetButton:hover {
+            background-color: #f5ae35;
+        }
+#buttonContainer {
+    position: fixed;
+    top: 50%;
+    left: 20px; /* Distance from the left side of the screen */
+    transform: translateY(-50%); /* Vertically center the buttons */
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 15px; /* Add space between buttons */
+}
+
+        .centerButton {
+            padding: 10px 20px;
+            background-color: #162A53;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: "Montserrat", sans-serif;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .centerButton:hover {
+            background-color: #1f3a76;
+        }
+                .resetButton {
+            padding: 10px 20px;
+            background-color: #f58c35;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: "Montserrat", sans-serif;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .resetButton:hover {
+            background-color: #f5ae35;
+        }
+        #globeContainer {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            min-height: 425px; /* Ensures enough space in Cvent */
+            max-height: 425px; /* Set your desired max height */
+        }
+        .info-box {
+            position: fixed; /* Ensures it appears on top */
+            z-index: 9999;
+            background: #162A53; /* Cvent-friendly background */
+            color: white;
+            font-family: "Montserrat", sans-serif;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            max-width: 300px;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.3);
+        }
+        .info-box img {
+            width: 50px;
+            height: auto;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        /* Hide the entire globe container on mobile */
+/* Hide the globe and all related elements entirely under 1000px width */
+@media (max-width: 1000px) {
+    #globeContainer, 
+    #buttonContainer, 
+    .arrow,
+    .info-box {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+    }
+    body {
+        overflow: auto !important; /* allow scrolling if needed */
+    }
+}
+
+
+        .arrow {
+            position: absolute;
+            font-size: 20px;
+            color: #162A53;
+            cursor: pointer;
+            z-index: 10000;
+        }
+
+        .arrow-left {
+            top: 50%;
+            left: 200px;
+            transform: translateY(-50%);
+        }
+
+        .arrow-right {
+            top: 50%;
+            right: 200px;
+            transform: translateY(-50%);
+        }
+
+        .arrow-top {
+            top: 0px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .arrow-bottom {
+            bottom: 0px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+<div id="globeContainer"></div>
+    <div id="infoBox" class="info-box"></div>
+    <!-- Buttons for different locations -->
+    <div id="buttonContainer">
+        <button class="centerButton" id="australiaButton">Australia</button>
+        <button class="centerButton" id="newZealandButton">New Zealand</button>
+        <button class="centerButton" id="northamerica">North America</button>
+        <button class="centerButton" id="ukButton">United Kingdom</button>
+        <button class="resetButton" id="reset">Reset</button>
+
+    </div>
+    <!-- Simple arrows for rotating the globe -->
+    <div class="arrow arrow-left" onclick="rotateLeft()">&#8592;</div>
+    <div class="arrow arrow-right" onclick="rotateRight()">&#8594;</div>
+    <div class="arrow arrow-top" onclick="rotateTop()">&#8593;</div>
+    <div class="arrow arrow-bottom" onclick="rotateBottom()">&#8595;</div>
+
+    <!-- Load Three.js manually for Cvent -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        let scene, camera, renderer, globe, raycaster, mouse, pins = [];
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 7; // ✅ Move camera back to make the globe larger
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById("globeContainer").appendChild(renderer.domElement); // ✅ Attach to Cvent container
+
+            // Create the globe (increased size)
+            const geometry = new THREE.SphereGeometry(3.7, 64, 64); // ✅ Increased globe size
+            const texture = new THREE.TextureLoader().load("https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/52a85de76da646afaf2dc81e3ecbb019.jpg");
+            const material = new THREE.MeshBasicMaterial({ map: texture });
+            globe = new THREE.Mesh(geometry, material);
+            scene.add(globe);
+
+            // Create raycaster & mouse for hover detection
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Function to create a pin (small sphere)
+            function createPin(lat, lon, info) {
+                const textureLoader = new THREE.TextureLoader();
+                const pinTexture = textureLoader.load("https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/1061a272f608412bbfa6c93d9fc0ea7c.png");
+
+                const spriteMaterial = new THREE.SpriteMaterial({ map: pinTexture });
+                const pin = new THREE.Sprite(spriteMaterial);
+
+                const phi = (90 - lat) * (Math.PI / 180);
+                const theta = -(lon * (Math.PI / 180));
+                const radius = 3.8; // Keeps the pin floating slightly above the globe
+
+                pin.position.set(
+                    radius * Math.sin(phi) * Math.cos(theta),
+                    radius * Math.cos(phi),
+                    radius * Math.sin(phi) * Math.sin(theta)
+                );
+
+                pin.scale.set(0.3, 0.3, 1); // Adjust pin size (increase if needed)
+
+                pin.userData = info;
+                globe.add(pin);
+                pins.push(pin);
+            }
+
+// Creating the pins for each organization
+createPin(-39.2865, 171.7763, {
+    name: "Social Service Providers",
+    description: "Social Service Providers Te Pai Ora o Aotearoa has over 200 members – our members are community-based social service organisations throughout Aotearoa New Zealand, and people working alongside social services. We strengthen the social sector through advocacy and engagement, learning and development, relationships and sector leadership. Our mahi contributes to ensuring children, rangatahi and whānau can thrive now and intergenerationally.",
+    website: "https://www.sspa.org.nz",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/debaea388aa84179823ef2787bc31429.png"
+});
+
+createPin(-23.1555729, 135.6020971, {
+    name: "Australian Association of Social Workers (AASW)",
+    description: "The Australian Association of Social Workers (AASW) is the professional body for social workers in Australia. As well as representing and supporting social workers in their essential work, we set the benchmarks for professional education and practice in social work.",
+    website: "https://www.aasw.asn.au",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/b8e0c522ee184f1b810b7ecec10f7881.png"
+});
+
+createPin(-43.5321, 172.6362, {
+    name: "The Aotearoa New Zealand Association of Social Workers (ANZASW)",
+    description: "We are a professional body for social workers in Aotearoa New Zealand. The Aotearoa New Zealand Association of Social Workers (more commonly known as ANZASW) was established in 1964. We are a national membership organisation, with around 4,000 members, that seeks to lift the quality of social work practice and advocate for social justice, human rights, and human dignity.",
+    website: "https://www.anzasw.nz",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/9bcfcc0e748c4ee3b624246b647f0a49.png"
+});
+
+createPin(37.7392, -106.9903, {
+    name: "The Butler Institute for Families",
+    description: "The Butler Institute for Families at the University of Denver Graduate School of Social Work collaboratively partners with organizations that serve children, youth, families, individuals and communities.",
+    website: "https://socialwork.du.edu/butler",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/9b87d985fad54054aedd7e4828f900e2.png"
+});
+
+createPin(39.7392, -108.9905, {
+    name: "Colorado Department of Human Services",
+    description: "CDHS supports people and families by connecting them with assistance, resources and support at every stage of their lives. We serve Coloradans through bold and innovative health and human services. And together, we empower Coloradans to thrive.",
+    website: "https://co4kids.org",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/4ada2f827ffb403d85d0b9abf39516e4.png"
+});
+
+createPin(38.9072, -77.0371, {
+    name: "Children’s Trust Alliance",
+    description: "Children’s Trust Fund Alliance, formerly known as the National Alliance of Children’s Trust and Prevention Funds, is the national membership organization for state children’s trust funds. The Alliance provides leadership and support for a dynamic national network of children’s trust and prevention funds who are catalysts for positive changes in systems, policies and practices in their states to promote well-being for children, families and communities.",
+    website: "https://ctfalliance.org",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/d5f1e6d3b23d4c218a5e5354b1096d0e.png"
+});
+
+createPin(43.0731, -89.4012, {
+    name: "Evident Change",
+    description: "Evident Change is a nonprofit that uses data and research to improve our social systems. We believe our systems should help people achieve their greatest potential, not create barriers to their success. That’s why we partner with systems professionals and communities to get to the root of their biggest challenges, and we give them the tools and knowledge to achieve better outcomes for everyone involved.",
+    website: "https://evidentchange.org",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/ff7f6092062e47dc94a0410e2f5f3733.png"
+});
+
+createPin(52.0907, 5.1214, {
+    name: "European FGC Network",
+    description: "At times, people find it hard to cope. Certain events in daily life have so much impact, are so complicated, or overwhelming, that help is welcome. How can this help be obtained, while remaining in control of one’s life? The vision on which Family Group Conferencing (FGC) is based, offers a direction.",
+    website: "https://fgcnetwork.eu/",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/5d7fde3a88ba4a719dcfd02f4dd43c1a.png"
+});
+
+createPin(49.5074, 2.1280, {
+    name: "Family Rights Group (FRG)",
+    description: "Family Rights Group’s vision: Every child should be able to be raised safely and thrive within their family. Children in the care system should have loving relationships they can turn to throughout life. We are the leading specialist child welfare charity working to make that a reality. Unique in bringing together legal and social work expertise, advice giving, policy and campaigning, and direct work with young people and families.",
+    website: "https://frg.org.uk/",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/4143351625504601bba076df5dc0c8af.png"
+});
+
+createPin(39.7749, -120.4196, {
+    name: "International Association of Family Support Networks (IAFSN)",
+    description: "The mission of the International Association of Family Support Networks (IAFSN) is to promote international cooperation, exchange, and best practices within the Family Support field to support children, families, and communities to thrive.",
+    website: "https://www.iafsn.org/",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/32f9cc34765d4b92b7b2a1379d9e6662.png"
+});
+
+createPin(39.7294, -104.8319, {
+    name: "Kempe Foundation",
+    description: "The Kempe Foundation is a network of caring community members whose dollars directly support professionals in the field of child abuse, neglect and trauma treatment and prevention. We support research-based programs offered by Kempe Center professionals, advance trainings for practitioners, and invest in solutions that improve the lives of children and families.",
+    website: "https://kempe.org/",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/4505197950e14570a6d7a02b687de975.png"
+});
+
+createPin(36.9072, -79.0371, {
+    name: "National Family Support Network",
+    description: "The mission of the National Family Support Network is to promote positive outcomes for all children, families, and communities by leveraging the collective impact of state networks and championing quality family support and strengthening practices and policies.",
+    website: "https://www.nationalfamilysupportnetwork.org",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/2900e1b6614e4bb1aad7a588d05feaa2.png"
+});
+
+createPin(39.7749, -124.4197, {
+    name: "National Institute for Permanent Family Connectedness",
+    description: "The mission of the National Institute for Permanent Family Connectedness is to advance permanency for all children and youth, with Family Finding as a core strategy and a method that adds value to service systems. Every child has a family, and family members can be found when we try. Loneliness can be devastating, even dangerous, and is experienced by most children in out of home care. The single factor most closely associated with positive outcomes for children is meaningful, lifelong connections to family. Training may be designed to target specific areas of concern or to sustain learning in established practices. Consultation services offer specific approaches to meet the critical challenge of achieving timely permanency for all who are served",
+    website: "https://www.familypermanency.org/",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/80391adb93cf445a9604c725c7cb5428.png"
+});
+
+createPin(51.5074, -0.1278, {
+    name: "Nuffield Family Justice Observatory",
+    description: "Our research identifies and fills gaps in our understanding of the family justice system, to support better outcomes for children and families.",
+    website: "https://www.nuffieldfjo.org.uk/",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/1af324f772a240748c8e2a4e84dac7a5.png"
+});
+
+createPin(-41.2865, 174.7763, {
+    name: "Oranga Tamariki",
+    description: "We're a Ministry dedicated to supporting any child in Aotearoa New Zealand whose wellbeing is at significant risk of harm now, or in the future. We also work with young people who may have offended, or are likely to offend.",
+    website: "https://www.orangatamariki.govt.nz/",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/5130078a5c8a4b8c97a8f00f368583fe.png"
+});
+
+createPin(45.5152, -122.6785, {
+    name: "Pale Blue",
+    description: "Pale Blue is a collaboration that seeks to disseminate learning and participatory methods which explore the intersection of Equality, Economics, and the Environment as the foundation for human health, flourishing, and justice. Kevin developed Family FindingTM and Family SeeingTM, a set of strategies now utilized throughout North America, Australia, and Western Europe to convene, catalyze and facilitate families, communities, and governments in their work to respond to the problems which most affect our lives and futures.",
+    website: "https://www.familyfinding.org/our-team",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/25de6b13f6644e1ea627e27efda62037.png"
+});
+
+createPin(-27.1555729, 135.6000971, {
+    name: "Relationships Australia",
+    description: "We are a leading provider of relationship support services for individuals, families and communities. We aim to support all people in Australia to achieve positive and respectful relationships.",
+    website: "https://www.anzasw.nz",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/10ba418d35e04bb9bbf4446a41f48d3d.png"
+});
+
+createPin(37.8044, -122.2712, {
+    name: "SENECA",
+    description: "For over three decades, Seneca has worked to help children and families through the most challenging times of their lives. We offer a simple promise to each youth and every family we serve: no matter how profound the difficulties you face, we will be with you every step of the way.",
+    website: "https://senecafoa.org/",
+    logo: "https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/64665ee139704212adb7c4011179b629.png"
+});
+
+
+            // Add more pins as needed
+
+            // Hover effect for the pin
+            document.addEventListener("mousemove", (event) => {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(pins);
+
+                const infoBox = document.getElementById("infoBox");
+                const globeContainer = document.getElementById("globeContainer");
+
+                if (intersects.length > 0) {
+                    const pin = intersects[0].object;
+                    const info = pin.userData;
+
+                    let infoBoxX = event.clientX + 15;  // X position to the right of the cursor
+                    let infoBoxY = event.clientY + 15;  // Y position below the cursor
+
+                    // Get the height of the info box to adjust for centering
+                    const infoBoxHeight = infoBox.offsetHeight;
+
+                    // Get the height of the globe container and center the box vertically
+                    const containerHeight = globeContainer.offsetHeight;
+                    infoBoxY = (containerHeight - infoBoxHeight) / 2;
+
+                    // Ensure infoBox does not overflow to the right side of the container
+                    if (infoBoxX + infoBox.offsetWidth > window.innerWidth) {
+                        infoBoxX = window.innerWidth - infoBox.offsetWidth - 15; // Adjust to the left if overflow
+                    }
+
+                    infoBox.style.left = `${infoBoxX}px`;
+                    infoBox.style.top = `${infoBoxY}px`;
+                    infoBox.style.display = "block";
+
+                    // Set the content of the infoBox
+                    infoBox.innerHTML = `
+                        <div style="display: flex; align-items: center;">
+                            <img src="${info.logo}" alt="${info.name}">
+                            <strong style="font-size: 16px; margin-left: 10px;">${info.name}</strong>
+                        </div>
+                        <p style="font-size: 12px; margin: 10px 0 0 5px;">${info.description}</p>
+                    `;
+                } else {
+                    infoBox.style.display = "none";
+                }
+            });
+
+            // Functions for rotating the globe
+            document.addEventListener("click", (event) => {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(pins);
+
+                if (intersects.length > 0) {
+                    window.open(intersects[0].object.userData.website, "_blank");
+                }
+            });
+
+            // Rotation controls
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+
+            document.addEventListener("mousedown", (event) => {
+                isDragging = true;
+                previousMousePosition = { x: event.clientX, y: event.clientY };
+            });
+
+            document.addEventListener("mouseup", () => {
+                isDragging = false;
+            });
+
+            document.addEventListener("mousemove", (event) => {
+                if (!isDragging) return;
+                const deltaX = event.clientX - previousMousePosition.x;
+                const deltaY = event.clientY - previousMousePosition.y;
+                globe.rotation.y += deltaX * 0.005;
+                globe.rotation.x += deltaY * 0.005;
+                previousMousePosition = { x: event.clientX, y: event.clientY };
+            });
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                renderer.render(scene, camera);
+            }
+
+            animate();
+        }
+
+        // Rotation functions for arrows
+        function rotateLeft() {
+            globe.rotation.y -= 0.1;
+        }
+
+        function rotateRight() {
+            globe.rotation.y += 0.1;
+        }
+
+        function rotateTop() {
+            globe.rotation.x -= 0.1;
+        }
+
+        function rotateBottom() {
+            globe.rotation.x += 0.1;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(init, 1000);
+        });
+        
+function centerGlobe(lat, lon) {
+    // Reset the globe's rotation
+    globe.rotation.set(0, 0, 0);
+
+    // Convert from lat, lon to globe rotation
+    const phi = (90 - lat) * (Math.PI / 180);
+    const theta = -(lon * (Math.PI / 180));
+
+    // Adjust the camera's position
+    camera.position.x = 7 * Math.sin(phi) * Math.cos(theta);
+    camera.position.y = 7 * Math.cos(phi);
+    camera.position.z = 7 * Math.sin(phi) * Math.sin(theta);
+
+    // The camera looks at the center of the globe (the origin)
+    camera.lookAt(0, 0, 0);
+
+    // Adjust the globe's rotation
+    globe.rotation.set(
+        0, // Reset rotation before applying new one
+        0, // Reset rotation before applying new one
+        0  // Reset rotation before applying new one
+    );
+}
+
+        // Button event listeners for centering
+        document.getElementById("australiaButton").addEventListener("click", function() {
+            centerGlobe(-25.2744, 133.7751); // Australia
+        });
+
+        document.getElementById("newZealandButton").addEventListener("click", function() {
+            centerGlobe(-40.9006, 174.886); // New Zealand
+        });
+
+        document.getElementById("northamerica").addEventListener("click", function() {
+            centerGlobe(37.0902, -95.7129); // United States
+        });
+
+        document.getElementById("ukButton").addEventListener("click", function() {
+            centerGlobe(51.5074, -0.1278); // United Kingdom
+        });
+        
+        document.getElementById("reset").addEventListener("click", function() {
+            centerGlobe(37.0902, -95.7129); // Reset
+        });
+        
+    </script>
+</body>
+</html>
