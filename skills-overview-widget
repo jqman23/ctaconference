@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cvent Code Widget</title>
+  <!-- Import Montserrat font -->
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet" />
+  <style>
+    /* Page background */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Montserrat', sans-serif;
+    }
+    /* Dark blue container with rounded corners and shadow */
+    #cvent-container {
+      width: 100%;
+      max-width: 1200px;
+      height: 1025px; /* Increased height to reduce vertical scrollbar. Up 75px for each new one */
+      margin: 20px auto;
+      padding: 40px;
+      box-sizing: border-box;
+      position: relative;
+      background: #0a1e3f; /* Dark blue */
+      border-radius: 20px;
+      overflow: hidden;
+    }
+   /* Styling for the top decorative line */
+  .decorative-top {
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+  }
+  .decorative-top svg {
+    display: block;
+    width: 100%;
+    height: 40px;
+    padding-bottom:15px;
+  }
+
+  /* Styling for the bottom decorative line */
+  .decorative-bottom {
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+  }
+  .decorative-bottom svg {
+    display: block;
+    width: 100%;
+    height: 40px;
+    padding-top:15px;
+  }
+    /* Main content layout */
+    .main-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin: 20px 0;
+    }
+    /* Side columns for images with extra spacing */
+    .side-column {
+      width: 170px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .photo-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .photo-column img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      margin: 70px 0;
+      border-radius: 5px;
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+    .photo-column img:hover {
+      transform: scale(1.1);
+    }
+    /* New class for 360° 3D spin on click */
+    .spinning {
+      animation: spin3d 0.8s ease-in-out forwards;
+    }
+    @keyframes spin3d {
+      from {
+        transform: perspective(800px) rotateY(0deg);
+      }
+      to {
+        transform: perspective(800px) rotateY(360deg);
+      }
+    }
+    /* Rotation classes for angled images */
+    .rotate-5 {
+      transform: rotate(5deg);
+    }
+    .rotate--5 {
+      transform: rotate(-5deg);
+    }
+    /* Center text container */
+    .text-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      margin: 0 20px;
+    }
+    .phrase {
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      margin: 13px;
+      cursor: pointer;
+      text-align: center;
+      transition: color 0.3s ease, transform 0.2s ease;
+    }
+        /* Alternate phrase colors for easier visual scanning */
+    .text-container .phrase:nth-child(odd) {
+      color: #ffffff;
+    }
+    .text-container .phrase:nth-child(even) {
+      color: #ffe2bd;
+    }
+    .phrase:hover {
+      color: #ffd700;
+      transform: scale(1.05);
+    }
+    /* Tooltip styling */
+    #tooltip {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.95);
+      color: #333;
+      padding: 8px 12px;
+      border-radius: 5px;
+      font-size: 14px;
+      font-weight: bold;
+      max-width: 300px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.15);
+    }
+    /* Glitter effect */
+    #glitter-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 5;
+    }
+    .glitter {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: #ffd700;
+      border-radius: 50%;
+      opacity: 1;
+      will-change: transform, opacity;
+      animation: fadeOut 0.3s ease-out forwards;
+    }
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: scale(1.3);
+      }
+    }
+/* Hide widget on small tablets & phones (below 1024px) */
+@media only screen and (max-width: 1023px) {
+  #cvent-container {
+    display: none !important;
+  }
+}
+  </style>
+</head>
+<body>
+  <div id="cvent-container">
+    <!-- Decorative element at the top -->
+    <div class="decorative-top">
+      <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <path d="M0,60 C300,0 900,120 1200,60 L1200,120 L0,120 Z" fill="#4477aa" opacity="0.6"></path>
+      </svg>
+    </div>
+
+    <div class="main-content">
+      <!-- Left side images -->
+      <div class="side-column left">
+        <div class="photo-column">
+    <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/4751f8e38f054929abb3e05343139a24.png" alt="Image 1" class="rotate-5" />
+    <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/9d6870e7fc744194872880d13c106ae6.png" alt="Image 2" class="rotate--5" />
+    <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/c1400fb1824e435798cede8bed109e3d.png" alt="Image 3" class="rotate-5" />
+        </div>
+      </div>
+      <!-- Center text phrases -->
+<div class="text-container">
+  <div class="phrase" data-info="Facilitated by Elizabeth Wendel, this session will focus on how for too long, 'safety planning' in child welfare has focused on compliance-driven checklists rather than the lived experiences of children, families, and their communities. What if, instead of managing safety, we facilitated safety-building—a process grounded in relationships, networks, and long-term well-being? This session will introduce a new tool developed by our organization to shift power back to families and communities, emphasizing connection over control.">
+          <a href="https://cvent.me/lro1vm" target="_blank" style="color: inherit; text-decoration: none;">
+        Safety Building: Expanding Understanding of Safety and Repositioning Action Power in Networks
+    </a>  
+  </div>
+  <div class="phrase" data-info="Led by Dan Comer, this skills session will shine a light on polarity, the relationship between two opposite but interrelated characteristics, thoughts, opinions, or tendencies (identified as separate poles). This concept helps us to see that both poles are equally necessary, important, and/or valued, and that we do not need to, nor should we, limit ourselves to an either/or approach.">
+    <a href="https://cvent.me/groQ7V" target="_blank" style="color: inherit; text-decoration: none;">
+        Managing Polarities
+    </a>  
+</div>
+  <div class="phrase" data-info="Kamilah Clayton will present this skills session, integrating Kevin Campbell's groundbreaking work on Family Finding® which has revolutionized the way child welfare thinks about and explores the possibilities that exist within a family’s network of support. Campbell’s work continues to shape the way child welfare workers engage with families to understand who they consider a support, and in what ways these individuals or groups can contribute to plans that ensure child safety. For communities that have always prioritized the interconnectedness of people, Family Finding® can feel like a validation of their lived experience, but it can also reveal relationship dynamics that require additional work to resolve so that network members can communicate and plan together.">
+        <a href="https://cvent.me/ZOo3v3" target="_blank" style="color: inherit; text-decoration: none;">
+        From Fractured Networks to Strong Bonds
+    </a>  
+  </div>
+  <div class="phrase" data-info="Emotional labor is defined as any piece of a job where a worker is responsible for both display rules of the organization as well as fostering an emotional climate where work goals can be met. First coined as a concept in the work of flight attendants, emotional labor is a primary component in our work in child and family service settings. It shows up when we help de-escalate conflict, when we empathize with families and children, and when we work to help families make needed changes. This skills session, facilitated by Ida Drury, PhD, MSW, will provide additional information on all the facets of emotional labor. Participants will complete a self-evaluation and talk about all the ways you practice emotional labor every day as well as strategies for resilience.">  
+            <a href="https://cvent.me/droqx4" target="_blank" style="color: inherit; text-decoration: none;">
+        Emotional Labor: Connecting Heart and Mind at Work
+    </a>  
+  </div>
+    <div class="phrase" data-info="Systemic change often feels distant or overwhelming. Relational activism offers a way of being which puts alternative, putting connection at the heart of advocacy. Whether in leadership, community organising, or everyday activism, relationships shape our ability to inspire change, navigate resistance, and build trust across divides. Why does relational activism matter? How do we turn conversations into meaningful action? Discover how everyday interactions can become powerful acts of change! In this session, you will join Tim Fisher and Kar-Man to discuss and do exercises to improve your communication, hopeful resilience, and capacity to foster inclusive spaces.">
+        <a href="https://cvent.me/lro1A2" target="_blank" style="color: inherit; text-decoration: none;">
+        Relational Activism in Practice
+    </a>  
+ </div>
+<div class="phrase" data-info="Colleen Gibley-Reed will facilitate this interactive workshop focusing on navigating trauma-informed leadership in child welfare. This session is designed to equip supervisors with practical skills and tools to create a trauma-sensitive environment for their teams. Through live action demos, case studies, and group discussions, participants will learn to recognize and address the impact of trauma on staff, promote resilience, and foster a supportive and healthy work environment. Leave with actionable strategies to implement trauma-informed practices and support your team’s well-being in challenging child welfare settings.">
+    <a href="https://cvent.me/mvomRA" target="_blank" style="color: inherit; text-decoration: none;">
+        Leading with Compassion: Trauma-Informed Supervision for Child Welfare Leaders
+    </a>
+</div>
+<div class="phrase" data-info="The ability to truly connect with people is a fundamental skill in social services, especially when working with families and individuals in challenging situations. Often, direct practitioners are trained to focus on the technical aspects of their role—filling out forms, asking specific questions, and documenting answers—but they may miss the deeper, human connection that can make a lasting difference in the lives of the people they serve. Valerie Frost, MAEd, will lead this skills session, focusing on developing skills to shift from transactional to relational interactions. Participants will explore the power of empathetic listening, asking open-ended questions, and engaging families in a way that fosters trust and authentic dialogue. This shift allows professionals to better understand the complex lives and challenges of the families they work with, leading to more meaningful assessments and better outcomes.">
+    <a href="https://cvent.me/oMgmLD" target="_blank" style="color: inherit; text-decoration: none;">
+        Building Empathy through Active Listening and Connection
+    </a>
+</div>
+<div class="phrase" data-info="Led by Sharon Inglis and Tim Shelton, this interactive skills-building session will equip participants with practical approaches to creating inclusive spaces where individuals and families feel empowered to share their perspectives and lead conversations about those things that matter to them.">
+    <a href="https://cvent.me/Yk1dWb" target="_blank" style="color: inherit; text-decoration: none;">
+        Amplifying Unheard Voices: Engaging with Communities Beyond the Professional Discourse
+    </a>
+</div>
+<div class="phrase" data-info="Facilitated by Michelle Mares, this session will explore how prior to a thought, prior to a word, and prior to an act, exists internal stimuli.  Without being completely aware of, our bodies reveal internal states that precede language, thought, and action. When we learn the when and the how hormones (and other chemicals) lead our bodies to respond in very predictable and specific ways, we can become more proactive and preventative within hostile situations, communications and relations.">
+    <a href="https://cvent.me/VzXDwb" target="_blank" style="color: inherit; text-decoration: none;">
+        Listen to What Their Body is Saying 
+    </a>
+</div>
+<div class="phrase" data-info="By becoming aware of our patterns and the roots of our perspectives, we open the door to understanding how these internal narratives affect us. This awareness gives us the power to shift our response, often the only thing truly within our control- how we respond. Krystal Grint will deliver this interactive, hands-on session diving into the unconscious thought patterns that guide us, and helping us discover how changing our mindset can transform the way we experience life.">
+    <a href="https://cvent.me/2MowA1" target="_blank" style="color: inherit; text-decoration: none;">
+        The Power of Mind and Perspective: Preserving Our Energy for What Truly Matters 
+    </a>
+</div>
+<div class="phrase" data-info="What if we viewed liberation not merely as a political ideology or the removal of restrictions, but as an opportunity to reshape our perspectives on thoughts and behaviors? Michelle Davis will lead this session which will guide participants in exploring developmental skills related to identity group membership, promoting growth in ourselves and others. It will help participants assess their own consciousness and behaviors, as well as those of others, to make strategic interventions.">
+    <a href="https://cvent.me/D1AbV2" target="_blank" style="color: inherit; text-decoration: none;">
+        Liberation: A Skills Perspective 
+    </a>
+</div>
+<div class="phrase" data-info="Conflict is a constant in child protection social work, often fueled by fear, anger, or resistance from parents. These tensions can make building effective relationships difficult, making social workers frustrated or feeling ineffective. Richard Devine will lead this session, guiding participants to learn more about why conflict is a necessary part of child protection work and how we can manage challenging relationships.">
+    <a href="https://cvent.me/lyg4PP" target="_blank" style="color: inherit; text-decoration: none;">
+        The Art of Engagement: How to Feel Confident Balancing Authority with Compassion in Forming Collaborative Relationships with Parents in Child Protection 
+    </a>
+</div>
+  <div class="phrase" data-info="Paul Nixon will deliver this skills session, exploring strategies for navigating conflict and change through collaborative approaches.">
+    Working in Partnership with Conflict and Change
+  </div>
+</div>
+
+      <!-- Right side images -->
+      <div class="side-column right">
+        <div class="photo-column">
+    <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/b89612a88cb34cbb86b9dbab9de0ce22.png" alt="Image 4" class="rotate--5" />
+    <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/4ff783d2b8034996ba3c212778f314d2.png" alt="Image 5" class="rotate-5" />
+    <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/3f449314ddb14da297f44bab7ecc33a3.png" alt="Image 6" class="rotate--5" />
+        </div>
+      </div>
+    </div>
+    <!-- Decorative element at the bottom -->
+    <div class="decorative-bottom">
+      <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <path d="M0,60 C300,120 900,0 1200,60 L1200,0 L0,0 Z" fill="#4477aa" opacity="0.6"></path>
+      </svg>
+    </div>
+    <!-- Glitter & tooltip containers -->
+    <div id="glitter-container"></div>
+    <div id="tooltip"></div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const glitterContainer = document.getElementById("glitter-container");
+      const tooltip = document.getElementById("tooltip");
+
+      // Glitter effect
+      function createGlitter(x, y) {
+        for (let i = 0; i < 3; i++) {
+          const glitter = document.createElement("div");
+          glitter.className = "glitter";
+          let offsetX = (Math.random() - 0.5) * 5;
+          let offsetY = (Math.random() - 0.5) * 5;
+          glitter.style.left = `${x + offsetX}px`;
+          glitter.style.top = `${y + offsetY}px`;
+          glitterContainer.appendChild(glitter);
+          setTimeout(() => glitter.remove(), 300);
+        }
+      }
+
+      document.addEventListener("mousemove", (e) => {
+        requestAnimationFrame(() => createGlitter(e.clientX, e.clientY));
+      });
+
+      // Tooltip logic for each phrase
+      const phrases = document.querySelectorAll(".phrase");
+      phrases.forEach((phrase) => {
+        phrase.addEventListener("mouseenter", () => {
+          tooltip.innerText = phrase.getAttribute("data-info");
+          tooltip.style.opacity = "1";
+        });
+phrase.addEventListener("mousemove", (e) => {
+    const offset = 10; // Space between cursor and tooltip
+
+    // Get tooltip dimensions
+    const tooltipWidth = tooltip.offsetWidth;
+    const tooltipHeight = tooltip.offsetHeight;
+
+    // Get current scroll position (important for keeping it in viewport)
+    const scrollX = window.scrollX || document.documentElement.scrollLeft;
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
+
+    // Default tooltip position (right and below cursor)
+    let posX = e.clientX + scrollX + offset;
+    let posY = e.clientY + scrollY + offset;
+
+    // Ensure it doesn't go off-screen on the right
+    if (posX + tooltipWidth > scrollX + window.innerWidth) {
+        posX = e.clientX + scrollX - tooltipWidth - offset;
+    }
+
+    // Ensure it doesn't go off-screen at the bottom
+    if (posY + tooltipHeight > scrollY + window.innerHeight) {
+        posY = e.clientY + scrollY - tooltipHeight - offset;
+    }
+
+    // Final safeguard: Prevent tooltip from going off the top or left side
+    if (posX < scrollX) posX = scrollX + offset;
+    if (posY < scrollY) posY = scrollY + offset;
+
+    // Apply new position
+    tooltip.style.left = `${posX}px`;
+    tooltip.style.top = `${posY}px`;
+    tooltip.style.opacity = "1";
+});
+        phrase.addEventListener("mouseleave", () => {
+          tooltip.style.opacity = "0";
+        });
+      });
+
+      // Add click event for 360° 3D spin on each image
+      const images = document.querySelectorAll('.photo-column img');
+      images.forEach(img => {
+        img.addEventListener('click', function(e) {
+          img.classList.add('spinning');
+          setTimeout(() => {
+            img.classList.remove('spinning');
+          }, 800);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
