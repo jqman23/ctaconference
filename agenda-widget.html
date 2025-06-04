@@ -307,6 +307,9 @@
     margin-top: 0.75rem !important;
     width: 100%;
   }
+  .speaker-bio-overlay {
+    display: none;
+  }
 }
 @media (max-width: 495px) {
   #theme-select{
@@ -414,17 +417,6 @@
     margin-top: 0.5em !important;
     margin-left: 0 !important;
     display: block;
-  }
-  .speaker-bio-overlay {
-    position: fixed;
-    max-width: 90vw;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    padding: 0.75rem 1rem;
-    border-radius: 0.5rem;
-    z-index: 60;
-    pointer-events: none;
   }
   .timezone-row label[for="timezone-select"] {
     margin-bottom: 0.25em !important;
@@ -3142,6 +3134,7 @@ function searchSessions(query) {
             const resetFilters = document.getElementById('reset-filters');
             const toast = document.getElementById('toast');
             const speakerBioOverlay = document.getElementById('speaker-bio-overlay');
+            const showSpeakerOverlay = window.matchMedia('(min-width: 1024px)').matches;
             const addToScheduleBtn = document.getElementById('add-to-schedule');
 const copySessionDetailsBtn = document.getElementById('copy-session-details');
 const themeSelect = document.getElementById('theme-select');
@@ -3785,16 +3778,18 @@ session.speakers.forEach(speaker => {
     const nameEl = speakerEl.querySelector('.speaker-name');
     if (nameEl) {
         nameEl.dataset.bio = speaker.bio || '';
-        nameEl.addEventListener('mouseenter', function(e) {
-            if (!this.dataset.bio) return;
-            speakerBioOverlay.textContent = this.dataset.bio;
-            speakerBioOverlay.classList.remove('hidden');
-            positionSpeakerBio(e);
-        });
-        nameEl.addEventListener('mousemove', positionSpeakerBio);
-        nameEl.addEventListener('mouseleave', function() {
-            speakerBioOverlay.classList.add('hidden');
-        });
+        if (showSpeakerOverlay) {
+            nameEl.addEventListener('mouseenter', function(e) {
+                if (!this.dataset.bio) return;
+                speakerBioOverlay.textContent = this.dataset.bio;
+                speakerBioOverlay.classList.remove('hidden');
+                positionSpeakerBio(e);
+            });
+            nameEl.addEventListener('mousemove', positionSpeakerBio);
+            nameEl.addEventListener('mouseleave', function() {
+                speakerBioOverlay.classList.add('hidden');
+            });
+        }
     }
 });
 
