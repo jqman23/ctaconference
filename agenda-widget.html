@@ -724,7 +724,6 @@
             </svg>
             <span id="toast-message">Session added to your schedule!</span>
         </div>
-        <div id="speaker-bio-overlay" class="speaker-bio-overlay hidden"></div>
     </div>
 
     <script>
@@ -3134,7 +3133,11 @@ function searchSessions(query) {
             const resetFilters = document.getElementById('reset-filters');
             const toast = document.getElementById('toast');
             const speakerBioOverlay = document.getElementById('speaker-bio-overlay');
-            const showSpeakerOverlay = window.matchMedia('(min-width: 1024px)').matches;
+            window.addEventListener('resize', function() {
+                if (window.innerWidth < 1024) {
+                    speakerBioOverlay.classList.add('hidden');
+                }
+            });
             const addToScheduleBtn = document.getElementById('add-to-schedule');
 const copySessionDetailsBtn = document.getElementById('copy-session-details');
 const themeSelect = document.getElementById('theme-select');
@@ -3778,18 +3781,19 @@ session.speakers.forEach(speaker => {
     const nameEl = speakerEl.querySelector('.speaker-name');
     if (nameEl) {
         nameEl.dataset.bio = speaker.bio || '';
-        if (showSpeakerOverlay) {
-            nameEl.addEventListener('mouseenter', function(e) {
-                if (!this.dataset.bio) return;
-                speakerBioOverlay.textContent = this.dataset.bio;
-                speakerBioOverlay.classList.remove('hidden');
-                positionSpeakerBio(e);
-            });
-            nameEl.addEventListener('mousemove', positionSpeakerBio);
-            nameEl.addEventListener('mouseleave', function() {
-                speakerBioOverlay.classList.add('hidden');
-            });
-        }
+        nameEl.addEventListener('mouseenter', function(e) {
+            if (window.innerWidth < 1024 || !this.dataset.bio) return;
+            speakerBioOverlay.textContent = this.dataset.bio;
+            speakerBioOverlay.classList.remove('hidden');
+            positionSpeakerBio(e);
+        });
+        nameEl.addEventListener('mousemove', function(e) {
+            if (window.innerWidth < 1024) return;
+            positionSpeakerBio(e);
+        });
+        nameEl.addEventListener('mouseleave', function() {
+            speakerBioOverlay.classList.add('hidden');
+        });
     }
 });
 
