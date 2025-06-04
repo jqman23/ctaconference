@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CSV to JS Object Formatter (Copyable Output with Quote Replacement and Optional Speaker Images)</title>
+  <title>CSV to JS Object Formatter (Copyable Output with Quote Replacement, Optional Speaker Images, specialTag, and Exclusions)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -57,7 +57,7 @@
 </head>
 <body>
   <div class="container">
-    <h2>CSV to JS Object Formatter (Copyable Output with Quote Replacement and Optional Speaker Images)</h2>
+    <h2>CSV to JS Object Formatter (Copyable Output with Quote Replacement, Optional Speaker Images, specialTag, and Exclusions)</h2>
     <label for="sessionFileInput">Select Session File (CSV):</label>
     <input type="file" id="sessionFileInput" accept=".csv" /><br/>
     <label for="speakerFileInput">Select Speaker File (CSV):</label>
@@ -245,7 +245,8 @@
           'presentation type',
           'category',
           '2025 cta tags',
-          'speaker code'
+          'speaker code',
+          '2024 cta session type'   // Add this so we can read specialTag and filter "Exclude"
         ];
         const missingSessionCols = requiredSessionCols.filter(col => !normSessionHeaders.includes(col));
         if (missingSessionCols.length) {
@@ -369,6 +370,13 @@
             let bodyOutput = ''; // will hold the objects only
             sessionRows.forEach((row, idx) => {
               const rowNum = idx + 2;
+
+              // If 2024 cta session type says "Exclude", skip this session
+              const dataTagRaw = (row['2024 cta session type'] || '').trim().toLowerCase();
+              if (dataTagRaw === 'exclude') {
+                return; // skip this session entirely
+              }
+
               const sessionCode = (row['session code'] || '').trim();
               const sessionId = (row['session id'] || '').trim();
 
@@ -501,7 +509,8 @@
               bodyOutput += `       dateValue: "${formattedDateValue}",\n`;
               bodyOutput += `       type: "${row['presentation type'] || ''}",\n`;
               bodyOutput += `       theme: "${row['category'] || ''}",\n`;
-
+              bodyOutput += `       specialTag: "${row['2024 cta session type'] || ''}",\n`;
+              
               if (tags.length) {
                 bodyOutput += '       tags: [' + tags.map(t => `"${t}"`).join(', ') + '],\n';
               } else {
