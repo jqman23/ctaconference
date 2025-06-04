@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CSV to JS Object Formatter (Copyable Output with Quote Replacement)</title>
+  <title>CSV to JS Object Formatter (Copyable Output with Quote Replacement and Optional Speaker Images)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -57,12 +57,14 @@
 </head>
 <body>
   <div class="container">
-    <h2>CSV to JS Object Formatter (Copyable Output with Quote Replacement)</h2>
+    <h2>CSV to JS Object Formatter (Copyable Output with Quote Replacement and Optional Speaker Images)</h2>
     <label for="sessionFileInput">Select Session File (CSV):</label>
     <input type="file" id="sessionFileInput" accept=".csv" /><br/>
     <label for="speakerFileInput">Select Speaker File (CSV):</label>
     <input type="file" id="speakerFileInput" accept=".csv" /><br/>
-    <button id="processBtn">Process Both CSVs</button>
+    <label for="imageFileInput">Select Speaker Image URL File (CSV) (optional):</label>
+    <input type="file" id="imageFileInput" accept=".csv" /><br/>
+    <button id="processBtn">Process CSVs</button>
     <button id="copyBtn">Copy Formatted Output</button>
     <span id="copyIndicator" class="indicator">Copied</span>
     <button id="copyErrBtn">Copy Errors</button>
@@ -199,14 +201,17 @@
     document.getElementById('processBtn').addEventListener('click', function () {
       const sessionInput = document.getElementById('sessionFileInput');
       const speakerInput = document.getElementById('speakerFileInput');
+      const imageInput = document.getElementById('imageFileInput');
       const outputArea = document.getElementById('outputArea');
       outputArea.value = '';
       lastFormattedOutput = '';
       lastErrors = '';
 
+      // Require only session and speaker files; image file is optional
       if (!sessionInput.files.length || !speakerInput.files.length) {
-        outputArea.value = 'ERROR: Both Session and Speaker CSV files must be selected.';
-        lastErrors = outputArea.value;
+        const err = 'ERROR: Both Session and Speaker CSV files must be selected.';
+        outputArea.value = err;
+        lastErrors = err;
         return;
       }
 
@@ -230,18 +235,18 @@
         const normSessionHeaders = rawSessionHeaders.map(h => h.toLowerCase());
 
         // Required columns in Session File
-const requiredSessionCols = [
-  'session id', // <-- add this line
-  'session code',
-  'session start date/time',
-  'end date/time',
-  'session name',
-  'description',
-  'presentation type',
-  'category',
-  '2025 cta tags',
-  'speaker code'
-];
+        const requiredSessionCols = [
+          'session id',
+          'session code',
+          'session start date/time',
+          'end date/time',
+          'session name',
+          'description',
+          'presentation type',
+          'category',
+          '2025 cta tags',
+          'speaker code'
+        ];
         const missingSessionCols = requiredSessionCols.filter(col => !normSessionHeaders.includes(col));
         if (missingSessionCols.length) {
           errors.push(
@@ -253,7 +258,7 @@ const requiredSessionCols = [
           return;
         }
 
-        // Build array of session row objects, but skip overwriting description if duplicate
+        // Build array of session row objects
         const sessionRows = sessionRowsText.slice(1).map((rowText, idx) => {
           const fields = parseCSVLine(rowText);
           const obj = {};
@@ -320,218 +325,275 @@ const requiredSessionCols = [
             return obj;
           });
 
-          // 3) Build lookup: speakersMap[sessionCode][speakerCode] = { name, role }
-const speakersMap = {};
-speakerRows.forEach((row, idx) => {
-  const rowNum = idx + 2;
-  const sessionCode = (row['session code'] || '').trim();
-  const speakerCode = (row['code'] || '').trim();
-  const firstName = row['first name'] || '';
-  const lastName = row['last name'] || '';
-  const role = row['title'] || '';
-  const fullName = `${firstName} ${lastName}`.trim();
-
-  // NEW: Extract extra fields
-  const company = row['company name'] || '';
-  const bio = row['biography'] || '';
-  const linkedin = row['linkedin url'] || '';
-  const x = row['x url'] || '';
-  const facebook = row['facebook url'] || '';
-
-  if (!sessionCode) {
-    errors.push(`WARNING: Speaker row ${rowNum}: “Session Code” is empty.`);
-  }
-  if (!speakerCode) {
-    errors.push(`WARNING: Speaker row ${rowNum}: “Code” (Speaker Code) is empty.`);
-  }
-  if (sessionCode && speakerCode) {
-    if (!speakersMap[sessionCode]) speakersMap[sessionCode] = {};
-    speakersMap[sessionCode][speakerCode] = {
-      name: fullName,
-      role,
-      company,
-      bio,
-      linkedin,
-      x,
-      facebook
-    };
-  }
-});
-
-          // 4) Build the final JS objects by iterating over sessionRows
-          let bodyOutput = ''; // will hold the objects only
-          sessionRows.forEach((row, idx) => {
+          // Build speakersMap[sessionCode][speakerCode] = { name, role, ... }
+          const speakersMap = {};
+          speakerRows.forEach((row, idx) => {
             const rowNum = idx + 2;
             const sessionCode = (row['session code'] || '').trim();
-              const sessionId = (row['session id'] || '').trim(); // <-- ADD THIS
+            const speakerCode = (row['code'] || '').trim();
+            const firstName = row['first name'] || '';
+            const lastName = row['last name'] || '';
+            const role = row['title'] || '';
+            const fullName = `${firstName} ${lastName}`.trim();
 
-            // Validate session code
+            // Extract extra fields
+            const company = row['company name'] || '';
+            const bio = row['biography'] || '';
+            const linkedin = row['linkedin url'] || '';
+            const x = row['x url'] || '';
+            const facebook = row['facebook url'] || '';
+
             if (!sessionCode) {
-              errors.push(`ERROR: Session row ${rowNum}: “Session Code” is empty.`);
+              errors.push(`WARNING: Speaker row ${rowNum}: “Session Code” is empty.`);
             }
-
-            // Validate session name, replacing any double quote with apostrophe
-            let sessionNameRaw = row['session name'] || '';
-            let sessionName = sessionNameRaw.replace(/"/g, "'"); 
-            if (!sessionNameRaw) {
-              errors.push(`ERROR: Session row ${rowNum}: “Session Name” is empty.`);
+            if (!speakerCode) {
+              errors.push(`WARNING: Speaker row ${rowNum}: “Code” (Speaker Code) is empty.`);
             }
-
-            // Validate and parse date/time
-            const startRaw = row['session start date/time'] || '';
-            const endRaw = row['end date/time'] || '';
-            let startDtObj = null, endDtObj = null;
-
-            if (!startRaw) {
-              errors.push(`ERROR: Session row ${rowNum}: “Session Start Date/Time” is empty.`);
-            } else {
-              startDtObj = parseDateTimeString(startRaw);
-              if (!startDtObj) {
-                const parts = startRaw.split(' ');
-                errors.push(
-                  `ERROR: Session row ${rowNum}: couldn’t parse “Session Start Date/Time”.\n` +
-                  `  Raw value: "${startRaw}"\n` +
-                  `  Split parts: [${parts.map(p => `"${p}"`).join(', ')}]\n` +
-                  `  Expected format: MM/DD/YYYY hh:mm:ss AM/PM`
-                );
-              }
+            if (sessionCode && speakerCode) {
+              if (!speakersMap[sessionCode]) speakersMap[sessionCode] = {};
+              speakersMap[sessionCode][speakerCode] = {
+                name: fullName,
+                role,
+                company,
+                bio,
+                linkedin,
+                x,
+                facebook
+              };
             }
-
-            if (!endRaw) {
-              errors.push(`WARNING: Session row ${rowNum}: “End Date/Time” is empty.`);
-            } else {
-              endDtObj = parseDateTimeString(endRaw);
-              if (!endDtObj) {
-                const partsE = endRaw.split(' ');
-                errors.push(
-                  `ERROR: Session row ${rowNum}: couldn’t parse “End Date/Time”.\n` +
-                  `  Raw value: "${endRaw}"\n` +
-                  `  Split parts: [${partsE.map(p => `"${p}"`).join(', ')}]\n` +
-                  `  Expected format: MM/DD/YYYY hh:mm:ss AM/PM`
-                );
-              }
-            }
-
-            const formattedDate = startDtObj ? formatDate(startDtObj) : '';
-            const formattedDateTime = startDtObj
-              ? `${formatDateTimeISO(startDtObj)}-06:00`
-              : '';
-            const formattedDateValue = startDtObj
-              ? formatDateValue(startDtObj)
-              : '';
-            const formattedTime =
-              startDtObj && endDtObj
-                ? formatTimeRange(startDtObj, endDtObj)
-                : startDtObj
-                ? formatTime(startDtObj)
-                : '';
-
-            // Tags from "2025 cta tags"
-            const rawTags = row['2025 cta tags'] || '';
-            const tags = rawTags
-              ? rawTags.split(',').map(t => t.trim()).filter(t => t !== '')
-              : [];
-            if (tags.length > 6) {
-              errors.push(
-                `WARNING: Session row ${rowNum}: “2025 CTA Tags” has ${tags.length} tags (expected 0–6).`
-              );
-            }
-
-            // Speaker codes from "speaker code"
-            const rawSpeakerCodes = row['speaker code'] || '';
-            const speakerCodes = rawSpeakerCodes
-              ? rawSpeakerCodes.split(',').map(c => c.trim()).filter(c => c !== '')
-              : [];
-            if (speakerCodes.length === 0) {
-              errors.push(`WARNING: Session row ${rowNum}: “Speaker Code” column is empty (no speakers).`);
-            }
-            if (speakerCodes.length > 7) {
-              errors.push(`WARNING: Session row ${rowNum}: “Speaker Code” has ${speakerCodes.length} codes (max 7).`);
-            }
-
-            // Collect speaker objects (name+role) via speakersMap
-            const speakersArr = [];
-            speakerCodes.forEach(code => {
-              if (!sessionCode) return; // already flagged above
-              if (!speakersMap[sessionCode]) {
-                errors.push(
-                  `ERROR: Session row ${rowNum}: no entries in Speaker File for Session Code "${sessionCode}".`
-                );
-                return;
-              }
-              if (!speakersMap[sessionCode][code]) {
-                errors.push(
-                  `ERROR: Session row ${rowNum}: Speaker Code "${code}" not found for Session "${sessionCode}".\n` +
-                  `  Available speaker codes for this session: [${Object.keys(speakersMap[sessionCode]).join(', ')}]`
-                );
-                return;
-              }
-              const info = speakersMap[sessionCode][code];
-              if (!info.name) {
-                errors.push(`WARNING: Session row ${rowNum}: Speaker Code "${code}" has no name in Speaker File.`);
-              }
-              if (!info.role) {
-                errors.push(`WARNING: Session row ${rowNum}: Speaker Code "${code}" ("${info.name}") has no Title/Role in Speaker File.`);
-              }
-let speakerName = (info.name || '').replace(/"/g, "'"); // Replace all " with '
-let company = (info.company || '').replace(/"/g, "'");
-let bio = (info.bio || '').replace(/"/g, "'");
-let linkedin = (info.linkedin || '').replace(/"/g, "'");
-let x = (info.x || '').replace(/"/g, "'");
-let facebook = (info.facebook || '').replace(/"/g, "'");
-speakersArr.push({
-  name: speakerName,
-  role: (info.role || '').replace(/"/g, "'"),
-  company: company,
-  bio: bio,
-  linkedin: linkedin,
-  x: x,
-  facebook: facebook
-});            });
-
-            // Construct the JS object literal
-            bodyOutput += '   {\n';
-              bodyOutput += `       id: "${sessionId}",\n`; // <-- ADD THIS
-            bodyOutput += `       title: "${sessionName}",\n`;
-let descriptionRaw = row['description'] || '';
-let description = descriptionRaw.replace(/"/g, "'"); // Replace all " with '
-bodyOutput += `       description: "${description}",\n`;
-            bodyOutput += `       date: "${formattedDate}",\n`;
-            bodyOutput += `       time: "${formattedTime}",\n`;
-            bodyOutput += `       datetime: "${formattedDateTime}",\n`;
-            bodyOutput += `       dateValue: "${formattedDateValue}",\n`;
-            bodyOutput += `       type: "${row['presentation type'] || ''}",\n`;
-            bodyOutput += `       theme: "${row['category'] || ''}",\n`;
-
-            if (tags.length) {
-              bodyOutput +=
-                '       tags: [' + tags.map(t => `"${t}"`).join(', ') + '],\n';
-            } else {
-              bodyOutput += '       tags: [],\n';
-            }
-
-            if (speakersArr.length) {
-              bodyOutput += '       speakers: [\n';
-speakersArr.forEach((sp, i) => {
-  bodyOutput += `           { name: "${sp.name}", role: "${sp.role}", company: "${sp.company}", bio: "${sp.bio}", linkedin: "${sp.linkedin}", x: "${sp.x}", facebook: "${sp.facebook}" }${i < speakersArr.length - 1 ? ',' : ''}\n`;
-});              bodyOutput += '       ]\n';
-            } else {
-              bodyOutput += '       speakers: []\n';
-            }
-
-            bodyOutput += idx < sessionRows.length - 1 ? '   },\n' : '   }\n';
           });
 
-          // Wrap with const sessions = [ ... ];
-          const wrappedOutput = 'const sessions = [\n' + bodyOutput + '];';
-          lastFormattedOutput = wrappedOutput;
-          lastErrors = errors.join('\n');
+          // After building speakersMap, handle image file optionally
+          const processWithImageMap = (imageMap) => {
+            // 4) Build the final JS objects by iterating over sessionRows
+            let bodyOutput = ''; // will hold the objects only
+            sessionRows.forEach((row, idx) => {
+              const rowNum = idx + 2;
+              const sessionCode = (row['session code'] || '').trim();
+              const sessionId = (row['session id'] || '').trim();
 
-          // 5) Display errors (if any), then the formatted output
-          if (errors.length) {
-            outputArea.value = errors.join('\n') + '\n\n' + wrappedOutput;
+              // Validate session code
+              if (!sessionCode) {
+                errors.push(`ERROR: Session row ${rowNum}: “Session Code” is empty.`);
+              }
+
+              // Validate session name, replacing any double quote with apostrophe
+              let sessionNameRaw = row['session name'] || '';
+              let sessionName = sessionNameRaw.replace(/"/g, "'"); 
+              if (!sessionNameRaw) {
+                errors.push(`ERROR: Session row ${rowNum}: “Session Name” is empty.`);
+              }
+
+              // Validate and parse date/time
+              const startRaw = row['session start date/time'] || '';
+              const endRaw = row['end date/time'] || '';
+              let startDtObj = null, endDtObj = null;
+
+              if (!startRaw) {
+                errors.push(`ERROR: Session row ${rowNum}: “Session Start Date/Time” is empty.`);
+              } else {
+                startDtObj = parseDateTimeString(startRaw);
+                if (!startDtObj) {
+                  const parts = startRaw.split(' ');
+                  errors.push(
+                    `ERROR: Session row ${rowNum}: couldn’t parse “Session Start Date/Time”.\n` +
+                    `  Raw value: "${startRaw}"\n` +
+                    `  Split parts: [${parts.map(p => `"${p}"`).join(', ')}]\n` +
+                    `  Expected format: MM/DD/YYYY hh:mm:ss AM/PM`
+                  );
+                }
+              }
+
+              if (!endRaw) {
+                errors.push(`WARNING: Session row ${rowNum}: “End Date/Time” is empty.`);
+              } else {
+                endDtObj = parseDateTimeString(endRaw);
+                if (!endDtObj) {
+                  const partsE = endRaw.split(' ');
+                  errors.push(
+                    `ERROR: Session row ${rowNum}: couldn’t parse “End Date/Time”.\n` +
+                    `  Raw value: "${endRaw}"\n` +
+                    `  Split parts: [${partsE.map(p => `"${p}"`).join(', ')}]\n` +
+                    `  Expected format: MM/DD/YYYY hh:mm:ss AM/PM`
+                  );
+                }
+              }
+
+              const formattedDate = startDtObj ? formatDate(startDtObj) : '';
+              const formattedDateTime = startDtObj ? `${formatDateTimeISO(startDtObj)}-06:00` : '';
+              const formattedDateValue = startDtObj ? formatDateValue(startDtObj) : '';
+              const formattedTime = startDtObj && endDtObj ? formatTimeRange(startDtObj, endDtObj) : (startDtObj ? formatTime(startDtObj) : '');
+
+              // Tags from "2025 cta tags"
+              const rawTags = row['2025 cta tags'] || '';
+              const tags = rawTags ? rawTags.split(',').map(t => t.trim()).filter(t => t !== '') : [];
+              if (tags.length > 6) {
+                errors.push(
+                  `WARNING: Session row ${rowNum}: “2025 CTA Tags” has ${tags.length} tags (expected 0–6).`
+                );
+              }
+
+              // Speaker codes from "speaker code"
+              const rawSpeakerCodes = row['speaker code'] || '';
+              const speakerCodes = rawSpeakerCodes ? rawSpeakerCodes.split(',').map(c => c.trim()).filter(c => c !== '') : [];
+              if (speakerCodes.length === 0) {
+                errors.push(`WARNING: Session row ${rowNum}: “Speaker Code” column is empty (no speakers).`);
+              }
+              if (speakerCodes.length > 7) {
+                errors.push(`WARNING: Session row ${rowNum}: “Speaker Code” has ${speakerCodes.length} codes (max 7).`);
+              }
+
+              // Collect speaker objects (name+role+image) via speakersMap and imageMap
+              const speakersArr = [];
+              speakerCodes.forEach(code => {
+                if (!sessionCode) return; // already flagged above
+                if (!speakersMap[sessionCode]) {
+                  errors.push(
+                    `ERROR: Session row ${rowNum}: no entries in Speaker File for Session Code "${sessionCode}".`
+                  );
+                  return;
+                }
+                if (!speakersMap[sessionCode][code]) {
+                  errors.push(
+                    `ERROR: Session row ${rowNum}: Speaker Code "${code}" not found for Session "${sessionCode}".\n` +
+                    `  Available speaker codes for this session: [${Object.keys(speakersMap[sessionCode]).join(', ')}]`
+                  );
+                  return;
+                }
+                const info = speakersMap[sessionCode][code];
+                if (!info.name) {
+                  errors.push(`WARNING: Session row ${rowNum}: Speaker Code "${code}" has no name in Speaker File.`);
+                }
+                if (!info.role) {
+                  errors.push(`WARNING: Session row ${rowNum}: Speaker Code "${code}" ("${info.name}") has no Title/Role in Speaker File.`);
+                }
+                let speakerName = (info.name || '').replace(/"/g, "'"); // Replace all " with '
+                let company = (info.company || '').replace(/"/g, "'");
+                let bio = (info.bio || '').replace(/"/g, "'");
+                let linkedin = (info.linkedin || '').replace(/"/g, "'");
+                let x = (info.x || '').replace(/"/g, "'");
+                let facebook = (info.facebook || '').replace(/"/g, "'");
+                let imageUrl = imageMap[code] || '';
+                imageUrl = imageUrl.replace(/"/g, "'"); // sanitize quotes
+
+                speakersArr.push({
+                  name: speakerName,
+                  role: (info.role || '').replace(/"/g, "'"),
+                  company: company,
+                  bio: bio,
+                  linkedin: linkedin,
+                  x: x,
+                  facebook: facebook,
+                  image: imageUrl
+                });
+              });
+
+              // Construct the JS object literal
+              bodyOutput += '   {\n';
+              bodyOutput += `       id: "${sessionId}",\n`;
+              bodyOutput += `       title: "${sessionName}",\n`;
+              let descriptionRaw = row['description'] || '';
+              let description = descriptionRaw.replace(/"/g, "'"); // Replace all " with '
+              bodyOutput += `       description: "${description}",\n`;
+              bodyOutput += `       date: "${formattedDate}",\n`;
+              bodyOutput += `       time: "${formattedTime}",\n`;
+              bodyOutput += `       datetime: "${formattedDateTime}",\n`;
+              bodyOutput += `       dateValue: "${formattedDateValue}",\n`;
+              bodyOutput += `       type: "${row['presentation type'] || ''}",\n`;
+              bodyOutput += `       theme: "${row['category'] || ''}",\n`;
+
+              if (tags.length) {
+                bodyOutput += '       tags: [' + tags.map(t => `"${t}"`).join(', ') + '],\n';
+              } else {
+                bodyOutput += '       tags: [],\n';
+              }
+
+              if (speakersArr.length) {
+                bodyOutput += '       speakers: [\n';
+                speakersArr.forEach((sp, i) => {
+                  bodyOutput += `           { name: "${sp.name}", role: "${sp.role}", company: "${sp.company}", bio: "${sp.bio}", linkedin: "${sp.linkedin}", x: "${sp.x}", facebook: "${sp.facebook}", image: "${sp.image}" }${i < speakersArr.length - 1 ? ',' : ''}\n`;
+                });
+                bodyOutput += '       ]\n';
+              } else {
+                bodyOutput += '       speakers: []\n';
+              }
+
+              bodyOutput += idx < sessionRows.length - 1 ? '   },\n' : '   }\n';
+            });
+
+            // Wrap with const sessions = [ ... ];
+            const wrappedOutput = 'const sessions = [\n' + bodyOutput + '];';
+            lastFormattedOutput = wrappedOutput;
+            lastErrors = errors.join('\n');
+
+            // 5) Display errors (if any), then the formatted output
+            if (errors.length) {
+              outputArea.value = errors.join('\n') + '\n\n' + wrappedOutput;
+            } else {
+              outputArea.value = wrappedOutput;
+            }
+          };
+
+          // If an image CSV was provided, read it; otherwise proceed with blank imageMap
+          if (imageInput.files.length) {
+            const imageReader = new FileReader();
+            imageReader.onload = function (evt) {
+              const rawImageText = evt.target.result;
+              const imageRowsText = splitIntoLogicalRows(rawImageText);
+
+              if (imageRowsText.length < 2) {
+                const err = 'ERROR: Image URL CSV contains fewer than 2 logical rows (no data rows).';
+                outputArea.value = err;
+                lastErrors = err;
+                return;
+              }
+
+              const rawImageHeaders = parseCSVLine(imageRowsText[0]).map(h => h.trim());
+              const normImageHeaders = rawImageHeaders.map(h => h.toLowerCase());
+
+              // Required columns in Image URL File
+              const requiredImageCols = [
+                'speaker code',
+                'image url'
+              ];
+              const missingImageCols = requiredImageCols.filter(col => !normImageHeaders.includes(col));
+              if (missingImageCols.length) {
+                errors.push(
+                  `ERROR: Image URL file is missing required columns:\n  • ${missingImageCols.join(', ')}\n\n` +
+                  `Available columns are:\n  • ${rawImageHeaders.join(', ')}`
+                );
+                outputArea.value = errors.join('\n');
+                lastErrors = errors.join('\n');
+                return;
+              }
+
+              // Build imageMap[speakerCode] = imageUrl
+              const imageMap = {};
+              imageRowsText.slice(1).forEach((rowText, idx) => {
+                const fields = parseCSVLine(rowText);
+                const obj = {};
+                normImageHeaders.forEach((h, i) => {
+                  let val = fields[i] !== undefined ? fields[i].trim() : '';
+                  if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
+                    val = val.slice(1, -1).replace(/""/g, '"');
+                  }
+                  obj[h] = val;
+                });
+                const speakerCode = (obj['speaker code'] || '').trim();
+                const imageUrl = obj['image url'] || '';
+                if (speakerCode) {
+                  imageMap[speakerCode] = imageUrl;
+                } else {
+                  errors.push(`WARNING: Image URL row ${idx + 2}: “Speaker Code” is empty.`);
+                }
+              });
+
+              processWithImageMap(imageMap);
+            };
+            imageReader.readAsText(imageInput.files[0]);
           } else {
-            outputArea.value = wrappedOutput;
+            // No image file provided → empty imageMap
+            processWithImageMap({});
           }
         };
 
