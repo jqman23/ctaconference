@@ -239,7 +239,7 @@ const requiredSessionCols = [
   'description',
   'presentation type',
   'category',
-  '2024 cta tags',
+  '2025 cta tags',
   'speaker code'
 ];
         const missingSessionCols = requiredSessionCols.filter(col => !normSessionHeaders.includes(col));
@@ -426,14 +426,14 @@ speakerRows.forEach((row, idx) => {
                 ? formatTime(startDtObj)
                 : '';
 
-            // Tags from "2024 cta tags"
-            const rawTags = row['2024 cta tags'] || '';
+            // Tags from "2025 cta tags"
+            const rawTags = row['2025 cta tags'] || '';
             const tags = rawTags
               ? rawTags.split(',').map(t => t.trim()).filter(t => t !== '')
               : [];
             if (tags.length > 6) {
               errors.push(
-                `WARNING: Session row ${rowNum}: “2024 CTA Tags” has ${tags.length} tags (expected 0–6).`
+                `WARNING: Session row ${rowNum}: “2025 CTA Tags” has ${tags.length} tags (expected 0–6).`
               );
             }
 
