@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Coordinate Picker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #controls {
+      margin-bottom: 10px;
+    }
+#canvas-container {
+  position: relative;
+  border: 1px solid #ccc;
+  display: none;
+  margin-bottom: 30px;
+  overflow: hidden; /* Prevent scrollbars */
+}
+    #pdf-canvas,
+    #overlay-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: crosshair;
+    }
+#report-controls {
+  display: none;
+  margin-top: 10px;
+  background: #fff; /* Add this line for visibility */
+  position: relative; /* Ensure stacking context */
+  z-index: 10;        /* Bring above canvases if needed */
+}
+    #coords-output {
+      white-space: pre-wrap;
+      font-family: monospace;
+      background: #f0f0f0;
+      padding: 10px;
+      margin-top: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    #copied-message {
+      color: green;
+      font-weight: bold;
+      display: none;
+      margin-top: 5px;
+    }
+    button {
+      padding: 8px 12px;
+      margin-top: 5px;
+      display: block;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  </script>
+</head>
+<body>
+  <div id="controls">
+    <label for="file-input">Upload a PDF or Image:</label>
+    <input type="file" id="file-input" accept="application/pdf,image/*" />
+  </div>
+
+  <div id="canvas-container">
+    <canvas id="pdf-canvas"></canvas>
+    <canvas id="overlay-canvas"></canvas>
+  </div>
+
+  <div id="report-controls">
+    <button id="generate-btn" disabled>Generate Report</button>
+    <div id="copied-message">Copied!</div>
+    <div id="coords-output"></div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const canvasContainer = document.getElementById('canvas-container');
+    const canvas = document.getElementById('pdf-canvas');
+    const overlay = document.getElementById('overlay-canvas');
+    const ctx = canvas.getContext('2d');
+    const overlayCtx = overlay.getContext('2d');
+    const reportControls = document.getElementById('report-controls');
+    const generateBtn = document.getElementById('generate-btn');
+    const output = document.getElementById('coords-output');
+    const copiedMsg = document.getElementById('copied-message');
+
+    let allFields = [];
+    let dragging = false;
+    let startX = 0, startY = 0;
+    let ready = false;
+    const DRAG_THRESHOLD = 5;
+
+    function clearOverlay() {
+      overlayCtx.clearRect(0, 0, overlay.width, overlay.height);
+    }
+
+    function drawRect(x1, y1, x2, y2) {
+      clearOverlay();
+      overlayCtx.strokeStyle = 'red';
+      overlayCtx.lineWidth = 1;
+      overlayCtx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    }
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      ready = false;
+      generateBtn.disabled = true;
+      canvasContainer.style.display = 'none';
+      reportControls.style.display = 'none';
+      allFields = [];
+      output.textContent = '';
+      copiedMsg.style.display = 'none';
+
+      const reader = new FileReader();
+      reader.onload = function () {
+        const type = file.type;
+        if (type === 'application/pdf') {
+          const typedArray = new Uint8Array(this.result);
+          pdfjsLib.getDocument(typedArray).promise.then(pdfDoc => {
+            pdfDoc.getPage(1).then(page => {
+              const viewport = page.getViewport({ scale: 1 });
+              canvas.width = overlay.width = viewport.width;
+              canvas.height = overlay.height = viewport.height;
+              canvasContainer.style.width = viewport.width + "px";   // <--- Add this
+canvasContainer.style.height = viewport.height + "px"; // <--- Add this
+
+              page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+                afterLoad();
+              });
+            });
+          });
+        } else if (type.startsWith('image/')) {
+          const img = new Image();
+          img.onload = () => {
+            canvas.width = overlay.width = img.width;
+            canvas.height = overlay.height = img.height;
+            canvasContainer.style.width = img.width + "px";   // <--- Add this
+canvasContainer.style.height = img.height + "px"; // <--- Add this
+
+            ctx.drawImage(img, 0, 0);
+            afterLoad();
+          };
+          img.src = this.result;
+        }
+      };
+
+      if (file.type === 'application/pdf') {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsDataURL(file);
+      }
+    });
+
+function afterLoad() {
+  clearOverlay();
+  ready = true;
+  canvasContainer.style.display = 'block';
+  reportControls.style.display = 'block';
+  generateBtn.disabled = false;
+  reportControls.scrollIntoView({ behavior: 'smooth' }); // changed line
+}
+    overlay.addEventListener('mousedown', (e) => {
+      if (!ready) return;
+      const rect = overlay.getBoundingClientRect();
+      startX = Math.round(e.clientX - rect.left);
+      startY = Math.round(e.clientY - rect.top);
+      dragging = true;
+    });
+
+    overlay.addEventListener('mousemove', (e) => {
+      if (!ready || !dragging) return;
+      const rect = overlay.getBoundingClientRect();
+      const currentX = Math.round(e.clientX - rect.left);
+      const currentY = Math.round(e.clientY - rect.top);
+      drawRect(startX, startY, currentX, currentY);
+    });
+
+    overlay.addEventListener('mouseup', (e) => {
+      if (!ready || !dragging) return;
+      dragging = false;
+      const rect = overlay.getBoundingClientRect();
+      const endX = Math.round(e.clientX - rect.left);
+      const endY = Math.round(e.clientY - rect.top);
+      const dx = Math.abs(endX - startX);
+      const dy = Math.abs(endY - startY);
+      const movedEnough = dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD;
+      clearOverlay();
+
+      if (movedEnough) {
+        const label = prompt('What is this rectangle for?');
+if (label) {
+  const x1 = Math.min(startX, endX);
+  const x2 = Math.max(startX, endX);
+  const y1 = Math.min(startY, endY);
+  const y2 = Math.max(startY, endY);
+  const corners = [
+    `${x1},${y1}`, // top left
+    `${x2},${y1}`, // top right
+    `${x2},${y2}`, // bottom right
+    `${x1},${y2}`  // bottom left
+  ];
+  allFields.push({ label, coords: corners });
+}
+      } else {
+        const label = prompt('What is this point for?');
+        if (label) {
+          allFields.push({ label, coords: [`${startX},${startY}`] });
+        }
+      }
+    });
+
+generateBtn.addEventListener('click', () => {
+  if (allFields.length === 0) {
+    alert('No coordinates recorded.');
+    return;
+  }
+  const report = allFields.map((field, i) => {
+    if (field.coords.length === 4) {
+      // Rectangle: label corners
+const labels = ['top left', 'top right', 'bottom right', 'bottom left'];
+      const corners = field.coords.map((coord, idx) => `${labels[idx]}: ${coord}`).join(' | ');
+      return `Field ${i + 1} (${field.label}): ${corners}`;
+    } else {
+      // Point
+      return `Field ${i + 1} (${field.label}): point: ${field.coords[0]}`;
+    }
+  }).join('\n');
+
+  output.textContent = report;
+
+  navigator.clipboard.writeText(report).then(() => {
+    copiedMsg.style.display = 'inline';
+    setTimeout(() => (copiedMsg.style.display = 'none'), 1500);
+  });
+});
+  </script>
+</body>
+</html>
