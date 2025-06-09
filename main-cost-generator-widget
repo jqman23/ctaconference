@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CTA 2025 • Pricing Estimator</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet" />
+
+<style>
+:root{
+  --blue-dark:#002855;
+  --blue-mid :#004c97;
+  --blue-bg  :#eaf1f9;
+  --accent   :#f58c35;
+  --border   :#dcdfe3;
+}
+*{box-sizing:border-box;margin:0}
+html, body {
+  min-height: 100vh;
+  height: auto;
+}
+body{
+  display:flex;justify-content:center;align-items:start;
+  background:#ffffff;font-family:'Montserrat',sans-serif;color:var(--blue-dark);
+  padding-top:2rem;
+}
+
+/* ---------- widget ---------- */
+.card{
+  position:relative;width:min(500px,95%);
+  background:#fff;border-radius:15px;border:1px solid var(--border);
+  padding:2.4rem 2.2rem 2.1rem;overflow:hidden;
+}
+h1{font-size:1.65rem;font-weight:600;text-align:center;margin-bottom:1.1rem}
+#whyBtn{display:block;text-align:center;font-size:.9rem;font-weight:500;color:var(--blue-dark);text-decoration:none;margin-bottom:.9rem}
+#whyBtn:hover{text-decoration:underline}
+hr.divider{border:0;border-top:1px solid var(--border);margin:1.5rem 0 1.1rem}
+
+/* ---------- form controls ---------- */
+label{display:block;font-weight:600;font-size:.95rem;margin-bottom:.4rem}
+section{margin-bottom:.8rem}
+input[type=range]{-webkit-appearance:none;width:100%;height:9px;border-radius:5px;background:var(--blue-bg);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);cursor:pointer}
+.value{font-size:1rem;font-weight:600;color:var(--blue-dark);text-align:right;margin-top:.3rem}
+select{width:100%;padding:.6rem .75rem;font-size:.95rem;border:1px solid var(--border);border-radius:8px;background:#fff}
+select:focus{outline:none;border-color:var(--blue-mid)}
+select.disabled{color:#9ea2a8;background:#f7f8f9;pointer-events:none}
+
+/* ---------- stats ---------- */
+.stat{border-radius:11px;padding:1rem .9rem;text-align:center;margin-top:.9rem}
+.stat h2{font-size:.9rem;font-weight:300;letter-spacing:.5px;margin-bottom:.32rem}
+.stat p{font-size:1.42rem;font-weight:600;margin:0}
+.stat.primary{background:var(--blue-mid);color:#fff}
+.stat.secondary{background:var(--accent);color:#fff;width:70%;margin:.9rem auto 0}
+#groupLink{display:none;text-align:center;margin-top:.3rem}
+#groupLink a{font-size:.88rem;font-weight:500;text-decoration:none;color:var(--blue-dark);}
+#groupLink a:hover{text-decoration:underline}
+
+/* ---------- overlay ---------- */
+#overlay{
+  position:absolute;inset:0;display:none;flex-direction:column;
+  justify-content:center;align-items:center;background:#fff;
+  padding:2.1rem 1.9rem;gap:1.25rem;color:var(--blue-dark);
+}
+#overlay h2{font-size:1.38rem;font-weight:600;color:var(--blue-mid)}
+#overlay ul{list-style:disc;padding-left:1.1rem;font-size:.93rem;line-height:1.5}
+#overlay button{
+  margin-top:.9rem;padding:.48rem 1.25rem;border:2px solid var(--blue-dark);
+  background:transparent;color:var(--blue-dark);font-size:.88rem;border-radius:6px;cursor:pointer;transition:.25s}
+#overlay button:hover{background:var(--blue-dark);color:#fff}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Conference Registration Pricing</h1>
+
+  <a id="whyBtn" href="#">What each individual receives with their registration →</a>
+
+  <section>
+    <label for="people">Number of people registered</label>
+    <input id="people" type="range" min="1" max="100" value="1" step="1" />
+    <div class="value" id="peopleValue">1</div>
+  </section>
+
+  <section>
+    <label for="student">Are you a student?</label>
+    <select id="student">
+      <option value="no" selected>No</option>
+      <option value="yes">Yes</option>
+    </select>
+  </section>
+
+  <section>
+    <label for="ceu">Are you claiming CEU credits?</label>
+    <select id="ceu">
+      <option value="no" selected>No</option>
+      <option value="yes">Yes</option>
+    </select>
+  </section>
+
+  <section>
+    <label for="deadline">Registration period</label>
+    <select id="deadline">
+      <option value="superEarly">Super Early Bird (before June 8, 2025)</option>
+      <option value="early" selected>Early Bird (before August 8, 2025)</option>
+      <option value="regular">Regular (after August 8th)</option>
+    </select>
+  </section>
+
+  <hr class="divider" />
+
+  <div class="stat primary">
+    <h2>Price per registrant</h2><p id="price">$150.00</p>
+  </div>
+
+  <div id="groupLink">
+    <a href="https://cvent.me/2Z2nar" target="_blank" rel="noopener">Learn more about group registration savings →</a>
+  </div>
+
+  <div class="stat secondary">
+    <h2>Total amount</h2><p id="total">$150.00</p>
+  </div>
+
+  <!-- overlay -->
+  <div id="overlay">
+    <h2>The benefits of attending this conference</h2>
+    <ul>
+      <li>Participate in <strong>200 live sessions</strong> across four consecutive days—pop in and out at times that are convenient for you</li>
+      <li>Access to <strong>150+ engaging on-demand sessions</strong> in the library for three months after the event concludes</li>
+      <li>Hear from <strong>innovative global presenters</strong> delivering cutting-edge research, practice tools, and lived-experience insight</li>
+      <li>Sign up for <strong>interactive Skill-Building Sessions</strong> offering hands-on exercises, demonstrations, and practical approaches you can immediately apply</li>
+      <li>Take part in <strong>Strategy Sessions</strong> where international leaders unpack global challenges and share proven, actionable solutions</li>
+      <li>Join <strong>International Exchanges</strong> scheduled at optimal times to spark cross-cultural ideas and actions on shared dilemmas</li>
+      <li><strong>US-based LSWs, LMFTs, and LMHCs</strong> can earn unlimited CEUs (50+ hours available) by participating in live and/or recorded sessions</li>
+    </ul>
+    <button id="flipBtn">↩︎&nbsp;&nbsp;Flip back</button>
+  </div>
+</div>
+
+<script>
+const matrix={
+  superEarly:{individual:127.5,student:63.75,group:{'10-19':106.25,'20-39':89.25,'40-74':72.25,'75+':63.75}},
+  early     :{individual:135,  student:67.5, group:{'10-19':112.5,'20-39':94.5,'40-74':76.5,'75+':67.5}},
+  regular   :{individual:150,  student:75,   group:{'10-19':125,  '20-39':105, '40-74':85,  '75+':75 }}
+};
+
+const $=id=>document.getElementById(id);
+const people=$('people'), val=$('peopleValue'), student=$('student'), ceu=$('ceu'),
+      period=$('deadline'), price=$('price'), total=$('total'), link=$('groupLink'),
+      overlay=$('overlay');
+
+const tier=(n,t)=>n>=75?t['75+']:n>=40?t['40-74']:n>=20?t['20-39']:t['10-19'];
+const lock=d=>[student,ceu].forEach(el=>{el.classList.toggle('disabled',d);if(d)el.value='no';});
+
+function update(){
+  const n=+people.value; val.textContent=n;
+  const set=matrix[period.value];
+  const base=n===1?(student.value==='yes'?set.student:set.individual):n<10?set.individual:tier(n,set.group);
+  const cost=(n===1&&ceu.value==='yes')?base+50:base;
+  price.textContent=`$${cost.toFixed(2)}`;
+  total.textContent=`$${(cost*n).toLocaleString('en-US',{minimumFractionDigits:2})}`;
+  lock(n!==1); link.style.display=n>=10?'block':'none';
+}
+['input','change'].forEach(evt=>[people,student,ceu,period].forEach(el=>el.addEventListener(evt,update)));
+update();
+
+$('whyBtn').addEventListener('click',e=>{e.preventDefault();overlay.style.display='flex';});
+$('flipBtn').addEventListener('click',()=>overlay.style.display='none');
+</script>
+</body>
+</html>
