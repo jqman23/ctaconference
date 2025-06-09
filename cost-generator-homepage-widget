@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CTA 2025 • Registration Cost Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --blue-dark: #002855;
+      --blue-mid : #004c97;
+      --blue-bg  : #eaf1f9;
+      --accent   : #f58c35;
+      --border   : #dcdfe3;
+    }
+
+    /* Reset & never show a vertical scrollbar */
+    * { box-sizing: border-box; margin: 0; }
+    html, body {
+      min-height: 100vh;
+      height: auto;
+      overflow-y: hidden;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 1rem;
+      background: #fff;
+      font-family: 'Montserrat', sans-serif;
+      color: var(--blue-dark);
+    }
+
+    /* Stack description above card on narrower screens */
+    @media only screen and (max-width: 950px) {
+      .container { flex-direction: column; }
+    }
+
+    /* At 640px and below, hide the calculator panel */
+    @media only screen and (max-width: 640px) {
+      .card { display: none !important; }
+    }
+
+    /* Two-column layout */
+    .container {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      width: 100%;
+    }
+
+    /* Left text */
+    .description {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.3;
+      color: #000;
+      text-align: left;
+    }
+
+    /* Right widget */
+    .card {
+      flex: 1 1 auto;
+      max-width: 600px;
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      overflow: hidden;
+    }
+
+    .controls {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .controls h1 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .row label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Slider */
+    #people {
+      width: 200px;
+      height: 6px;
+      background: var(--blue-bg);
+      border-radius: 4px;
+      -webkit-appearance: none;
+      outline: none;
+    }
+    #people::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+    }
+    #peopleValue {
+      font-size: 0.9rem;
+      width: 2ch;
+      text-align: right;
+      margin-left: 0.5rem;
+    }
+
+    /* Checkboxes */
+    .opts {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .opts label {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.9rem;
+    }
+    .opts input {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Dropdown */
+    #deadline {
+      font-size: 0.9rem;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+    }
+
+    /* Stats column */
+    .stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.75rem;
+      margin-left: 1rem;
+    }
+    .stat-box {
+      width: 8rem;
+      padding: 0.5rem 0;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .stat-box h2 {
+      margin: 0;
+      font-weight: 300;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+    }
+    .stat-box p {
+      margin: 0.25rem 0 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .primary   { background: var(--blue-mid); color: #fff; }
+    .secondary { background: var(--accent);   color: #fff; }
+
+    #groupLink {
+      font-size: 0.8rem;
+    }
+    #groupLink a {
+      color: var(--blue-dark);
+      text-decoration: none;
+    }
+    #groupLink a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="description">
+      Explore 200+ live sessions over four days with flexible scheduling, access to 150+ on-demand recordings for three months post-event, engage with global experts in hands-on skill-building, and earn unlimited CEUs for a modest flat rate. Learn more about our <a href="https://cvent.me/2Z2nar">group discounts</a>, <a href="https://cvent.me/grWORn">CEU offerings</a>, and <a href="https://cvent.me/drM2No">Skill Building Sessions</a>.
+    </div>
+    <div class="card">
+      <div class="controls">
+        <h1>Registration Cost Calculator</h1>
+        <div class="row">
+          <label for="people"># of Attendees</label>
+          <input id="people" type="range" min="1" max="100" value="1"/>
+          <span id="peopleValue">1</span>
+        </div>
+        <div class="row">
+          <div class="opts">
+            <label><input id="student" type="checkbox"/>Student</label>
+            <label><input id="ceu"     type="checkbox"/>Add CEUs</label>
+          </div>
+        </div>
+        <div class="row">
+          <label for="deadline">Registration Period</label>
+          <select id="deadline">
+            <option value="superEarly">Super Early Bird (June 8th)</option>
+            <option value="early" selected>Early Bird (Aug 8th)</option>
+            <option value="regular">Regular</option>
+          </select>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat-box primary">
+          <h2>Price per person</h2>
+          <p id="price">$150.00</p>
+        </div>
+        <div class="stat-box secondary">
+          <h2>Total</h2>
+          <p id="total">$150.00</p>
+        </div>
+        <div id="groupLink" style="display:none">
+          <a href="https://cvent.me/2Z2nar">Group discounts →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const matrix = {
+      superEarly: { individual:127.5, student:63.75, group:{'10-19':106.25,'20-39':89.25,'40-74':72.25,'75+':63.75} },
+      early     : { individual:135,   student:67.5,  group:{'10-19':112.5,'20-39':94.5,'40-74':76.5,'75+':67.5} },
+      regular   : { individual:150,   student:75,    group:{'10-19':125,  '20-39':105, '40-74':85,  '75+':75   } }
+    };
+
+    const $ = id => document.getElementById(id);
+    const people  = $('people'),
+          student = $('student'),
+          ceu     = $('ceu'),
+          period  = $('deadline'),
+          price   = $('price'),
+          total   = $('total'),
+          link    = $('groupLink'),
+          val     = $('peopleValue');
+
+    function tier(n, t) {
+      if (n >= 75) return t['75+'];
+      if (n >= 40) return t['40-74'];
+      if (n >= 20) return t['20-39'];
+      return t['10-19'];
+    }
+
+    function update() {
+      const n = +people.value;
+      val.textContent = n;
+      const set = matrix[period.value];
+      let base = n === 1
+        ? (student.checked ? set.student : set.individual)
+        : (n < 10 ? set.individual : tier(n, set.group));
+      if (n === 1 && ceu.checked) base += 50;
+      price.textContent = `$${base.toFixed(2)}`;
+      total.textContent = `$${(base * n).toLocaleString('en-US',{minimumFractionDigits:2})}`;
+if (n !== 1) {
+  student.checked = false;
+  ceu.checked = false;
+  student.disabled = true;
+  ceu.disabled = true;
+} else {
+  student.disabled = false;
+  ceu.disabled = false;
+}
+      link.style.display = (n >= 10) ? 'block' : 'none';
+    }
+
+    ['input','change'].forEach(evt =>
+      [people, student, ceu, period].forEach(el =>
+        el.addEventListener(evt, update)
+      )
+    );
+    update();
+  </script>
+</body>
+</html>
