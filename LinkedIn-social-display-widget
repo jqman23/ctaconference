@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>LinkedIn Embed Deck with Toggle</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --full-card-width: 504px;
+  --visible-count: 7;
+  --sliver-width: 0px;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Montserrat', sans-serif;
+  color: #333;
+}
+
+
+    .carousel-container {
+      position: relative;
+      width: 100%;
+      height: 680px;
+      overflow: visible;
+    }
+    .carousel-wrapper {
+      margin: 0 40px;
+      height: 100%;
+      overflow: hidden;
+    }
+    .carousel {
+      display: flex;
+      align-items: flex-start;
+      height: 100%;
+      gap: calc(-1 * var(--sliver-width));
+      scroll-snap-type: x mandatory;
+      overflow-x: auto;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      padding-bottom: 0.5rem;
+    }
+    .carousel::-webkit-scrollbar { display: none; }
+    .card {
+      flex: 0 0 auto;
+      width: var(--sliver-width);
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      transition: width 0.4s ease, z-index 0.4s ease, margin-left 0.4s ease;
+      cursor: pointer;
+      scroll-snap-align: start;
+      background: #f9f9f9;
+    }
+    .card:hover {
+      width: var(--full-card-width);
+      z-index: 10;
+      margin-left: 0;
+    }
+    .card iframe {
+      width: var(--full-card-width) !important;
+      height: 100% !important;
+      border: none;
+      display: block;
+      background: #fff;
+    }
+    .carousel-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      line-height: 38px;
+      border-radius: 50%;
+      border: 1px solid #ccc;
+      background: rgba(255,255,255,0.9);
+      font-size: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      z-index: 20;
+    }
+    .carousel-btn.prev { left: 0; }
+    .carousel-btn.next { right: 0; }
+    .carousel-btn:hover {
+      background: #fff;
+      transform: translateY(-50%) scale(1.2);
+    }
+
+.link-list {
+  display: none;
+  margin: 0 40px 2rem;
+  padding-top: 0.5rem; /* 👈 Add this line */
+}
+
+    .link-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .link-box {
+      background: #89A84F;
+      border: 2px solid #162A53;
+      border-radius: 6px;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .link-box:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    /* equal vertical spacing */
+    .link-box > * {
+      margin: 0.5rem 0;
+    }
+    .linkedin-icon {
+      width: 24px;
+      height: 24px;
+      opacity: 0.8;
+    }
+    .link-date {
+      font-weight: bold;
+      color: #fff;
+    }
+    .link-box a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: bold;
+    }
+    .link-box a:hover {
+      text-decoration: underline;
+    }
+
+    .toggle-container {
+      text-align: center;
+      padding: 1rem 0 2rem;
+      position: relative;
+      z-index: 30;
+    }
+    .toggle-btn {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border: none;
+      background: #162A53;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .toggle-btn:hover {
+      background: #1e3b6a;
+    }
+    .link-desc {
+  color: #002855; /* or any color you prefer */
+  font-size: 0.9rem;
+}
+  </style>
+</head>
+<body>
+
+  <!-- Carousel -->
+  <div class="carousel-container" id="carouselContainer">
+    <button class="carousel-btn prev" aria-label="Previous">‹</button>
+    <div class="carousel-wrapper">
+      <div class="carousel" id="carousel">
+              <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7331083568355467265?collapsed=1" title="May 21 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7328544729850085376?collapsed=1" title="May 14 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7326368045797388290?collapsed=1" title="May 8 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7325633081661370369?collapsed=1" title="May 6 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7323067085956272128?collapsed=1" title="May 1 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7323784022420004865?collapsed=1" title="Apr 29 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7321303503723806720?collapsed=1" title="Apr 24 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7318015432412512258?collapsed=1" title="Apr 15 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7308925480840151041?collapsed=1" title="Mar 21 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7303492657698258944?collapsed=1" title="Mar 6 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7302784378990907392?collapsed=1" title="Mar 4 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7298031031893336064?collapsed=1" title="Feb 19 2025"></iframe></div>
+        <div class="card"><iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7295547393125531648?collapsed=1" title="Feb 12 2025"></iframe></div>
+      </div>
+    </div>
+    <button class="carousel-btn next" aria-label="Next">›</button>
+  </div>
+
+  <!-- Link List -->
+  <div class="link-list" id="linkList">
+<div class="link-grid">
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">May 21, 2025</span>
+    <span class="link-desc">Skill-Building Session: Managing Polarities</span>
+    <a href="https://www.linkedin.com/posts/the-kempe-center_childwelfare-skillbuilding-managingpolarities-activity-7331083571283025920-bVyN" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">May 14, 2025</span>
+    <span class="link-desc">Skill-Building Session: Relational Activism</span>
+    <a href="https://www.linkedin.com/posts/the-kempe-center_calltoactiontochangechildwelfare2025-virtualconference-activity-7328544731662114816-Qv99" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">May 8, 2025</span>
+    <span class="link-desc">Skill-Building Session: Trauma-Informed Supervision</span>
+    <a href="https://www.linkedin.com/posts/the-kempe-center_childwelfare-virtualconference-skillbuilding-activity-7326380394675666946-0Sxr" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">May 6, 2025</span>
+    <span class="link-desc">Keynote Speaker Announcement: Kelley Fong, PhD</span>
+    <a href="https://www.linkedin.com/posts/the-kempe-center_childwelfare-socialjustice-keynotespeaker-activity-7325633083120963587-jjnI" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">May 1, 2025</span>
+    <span class="link-desc">Skill-Building Session: Rebuilding Family Networks</span>
+    <a href="https://www.linkedin.com/posts/the-kempe-center_ctaconference-skillbuilding-childwelfare-activity-7323067087403331584-TOE_" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">Apr 29, 2025</span>
+    <span class="link-desc">Final Deadline for Presentation Proposals</span>
+    <a href="https://www.linkedin.com/posts/the-kempe-center_last-call-for-presentation-proposals-to-the-activity-7323784025754456066-sJ9X" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">Apr 24, 2025</span>
+    <span class="link-desc">Skill-Building Session: Building Empathy through Active Listening</span>
+    <a href="https://www.linkedin.com/feed/update/urn:li:activity:7321303505388883968" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">Apr 15, 2025</span>
+    <span class="link-desc">Deadline for Presentation Proposals is Approaching</span>
+    <a href="https://www.linkedin.com/feed/update/urn:li:activity:7318015435264729089" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">Mar 21, 2025</span>
+    <span class="link-desc">Introducing our Global Partners</span>
+    <a href="https://www.linkedin.com/feed/update/urn:li:activity:7308925482601697280" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">Mar 6, 2025</span>
+    <span class="link-desc">Catalyst Webinar Series Kickoff</span>
+    <a href="https://www.linkedin.com/feed/update/urn:li:activity:7303492658411278336" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">Mar 4, 2025</span>
+    <span class="link-desc">Registration is OPEN</span>
+    <a href="https://www.linkedin.com/feed/update/urn:li:activity:7302784381968887809" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">Feb 19, 2025</span>
+    <span class="link-desc">The Call for Presentations has Begun!</span>
+    <a href="https://www.linkedin.com/feed/update/urn:li:activity:7298031034812481536" target="_blank">View Post</a>
+  </div>
+  <div class="link-box">
+    <img class="linkedin-icon" src="https://www.linkedin.com/favicon.ico" alt="LinkedIn">
+    <span class="link-date">Feb 12, 2025</span>
+    <span class="link-desc">Watch: 2024 Keynote – Anne Longfield</span>
+    <a href="https://www.linkedin.com/feed/update/urn:li:activity:7295547394245414913" target="_blank">View Post</a>
+  </div>
+</div>
+  </div>
+
+  <!-- Toggle Button at bottom -->
+  <div class="toggle-container">
+    <button id="toggleBtn" class="toggle-btn">Show Links Instead</button>
+  </div>
+
+  <script>
+    const carousel = document.getElementById('carousel'),
+          carouselContainer = document.getElementById('carouselContainer'),
+          linkList = document.getElementById('linkList'),
+          toggleBtn = document.getElementById('toggleBtn'),
+          visibleCount = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--visible-count'));
+
+    function updateSliver() {
+      const wrap = document.querySelector('.carousel-wrapper'),
+            sliver = wrap.clientWidth / visibleCount;
+      document.documentElement.style.setProperty('--sliver-width', sliver + 'px');
+    }
+
+    window.addEventListener('load', updateSliver);
+    window.addEventListener('resize', updateSliver);
+
+    document.querySelector('.prev').onclick = () =>
+      carousel.scrollBy({ left: -parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sliver-width')), behavior: 'smooth' });
+    document.querySelector('.next').onclick = () =>
+      carousel.scrollBy({ left: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sliver-width')), behavior: 'smooth' });
+
+    toggleBtn.onclick = () => {
+      const showingLinks = linkList.style.display !== 'block';
+      linkList.style.display = showingLinks ? 'block' : 'none';
+      carouselContainer.style.display = showingLinks ? 'none' : 'block';
+      toggleBtn.textContent = showingLinks
+        ? 'Show Carousel'
+        : 'Show Links Instead';
+    };
+  </script>
+</body>
+</html>
