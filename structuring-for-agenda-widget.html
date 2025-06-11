@@ -246,7 +246,7 @@
           'category',
           '2025 cta tags',
           'speaker code',
-          '2024 cta session type'   // Add this so we can read specialTag and filter "Exclude"
+          '2025 cta special tag'   // Add this so we can read specialTag and filter "Exclude"
         ];
         const missingSessionCols = requiredSessionCols.filter(col => !normSessionHeaders.includes(col));
         if (missingSessionCols.length) {
@@ -371,8 +371,8 @@
             sessionRows.forEach((row, idx) => {
               const rowNum = idx + 2;
 
-              // If 2024 cta session type says "Exclude", skip this session
-              const dataTagRaw = (row['2024 cta session type'] || '').trim().toLowerCase();
+              // If 2025 cta special tag says "Exclude", skip this session
+              const dataTagRaw = (row['2025 cta special tag'] || '').trim().toLowerCase();
               if (dataTagRaw === 'exclude') {
                 return; // skip this session entirely
               }
@@ -509,7 +509,7 @@
               bodyOutput += `       dateValue: "${formattedDateValue}",\n`;
               bodyOutput += `       type: "${row['presentation type'] || ''}",\n`;
               bodyOutput += `       theme: "${row['category'] || ''}",\n`;
-              bodyOutput += `       specialTag: "${row['2024 cta session type'] || ''}",\n`;
+              bodyOutput += `       specialTag: "${row['2025 cta special tag'] || ''}",\n`;
               
               if (tags.length) {
                 bodyOutput += '       tags: [' + tags.map(t => `"${t}"`).join(', ') + '],\n';
