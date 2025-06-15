@@ -74,7 +74,7 @@ a {
       box-shadow: none; /* Removed shadow */
       width: 90%;
       max-width: 1000px;
-      padding: 3rem 2.5rem;
+      padding: 1rem 2.5rem;
       color: var(--blue);
     }
 
@@ -336,7 +336,7 @@ a {
         </div>
   <script>
     const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-    const API_KEY = 'Bearer API KEY HERE'; // Replace with your actual API key
+    const API_KEY = 'Bearer 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';
 
     const btn     = document.getElementById('generate-btn');
     const copyBtn = document.getElementById('copy-btn');
@@ -362,7 +362,7 @@ btn.addEventListener('click', () => {
 
   // 1) Check limit
   if (remainingClicks <= 0) {
-    out.textContent = `You have reached the maximum number of generations (${MAX_GENERATE_CLICKS}) for today. …`;
+    out.textContent = `You have reached the maximum number of generations (${MAX_GENERATE_CLICKS}) for today. This limit resets each day. Your saved knowledge-check questions and measureable objectives will remain available for you to copy and paste so long as you do not clear your browser's local storage.`;
     return;
   }
 
@@ -1363,14 +1363,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().split('T')[0];
   let generateData = JSON.parse(localStorage.getItem('generateData'));
 
-  // If localStorage is cleared or data is missing, initialize it
   if (!generateData || generateData.date !== today) {
     generateData = { date: today, count: 0 };
     localStorage.setItem('generateData', JSON.stringify(generateData));
   }
 
   const remainingClicks = MAX_GENERATE_CLICKS - generateData.count;
-  btn.textContent = `Generate (${remainingClicks} Remaining)`; // Initialize button text
+  btn.textContent = `Generate (${remainingClicks} Remaining)`;
+
+  // ← Add this line:
+  loadFromLocalStorage();
 });
   </script>
         <!-- End of CEU widget -->
