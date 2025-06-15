@@ -336,7 +336,7 @@ a {
         </div>
   <script>
     const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-    const API_KEY = 'Bearer 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';
+    const API_KEY = 'Bearer API KEY';
 
     const btn     = document.getElementById('generate-btn');
     const copyBtn = document.getElementById('copy-btn');
