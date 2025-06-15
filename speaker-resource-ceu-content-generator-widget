@@ -293,6 +293,9 @@ a {
           <a href="https://cvent.me/YRmVVA" target="_blank" rel="noopener noreferrer" class="text-[var(--primary-blue)] underline">
             Speaker Portal & Questionnaire</a>.
         </p>
+        <!-- CEU Question & Objective Generator Widget -->
+  <div class="ceu-widget">
+    <h2>Generate Ideas for CEU Knowledge-Check Questions &amp; Measureable Objectives</h2>
         <p class="mt-6 mb-2 text-gray-800 font-semibold">
           To generate ideas for these questions and objectives, please note:
         </p>
@@ -301,11 +304,7 @@ a {
           <li>Each set remains saved so long as you do not clear your browser’s local storage. You can reference back to each saved version to choose the most appropriate questions and objectives for your session.</li>
           <li>You can edit and/or copy each set of questions and objectives at any time.</li>
         </ol>
-
-        <!-- CEU Question & Objective Generator Widget -->
-  <div class="ceu-widget">
-    <h2>Generate Ideas for CEU Knowledge-Check Questions &amp; Measureable Objectives</h2>
-
+        <br>
     <label for="title">Session Title</label>
     <p class="instruction">As you begin typing, you will see the option to select your session from a drop-down menu. Alternatively, you can simply type in the name of your session here.</p>
     <div style="position: relative;">
