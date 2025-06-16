@@ -248,6 +248,20 @@ a {
     display: none !important;
   }
 }
+/* Limit button width and enable text wrapping */
+.tab-btn {
+  max-width: 300px; /* Set a maximum width for the button */
+  white-space: normal; /* Allow text to wrap */
+  text-align: center; /* Center-align the text */
+}
+/* hide the mobile text by default */
+.mobile-label { display: none; }
+
+/* on small screens, swap them */
+@media (max-width: 640px) {
+  .desktop-label { display: none; }
+  .mobile-label { display: inline; }
+}
   </style>
 </head>
 <body>
@@ -257,9 +271,14 @@ a {
   <button class="tab-btn tab-active px-6 py-3 font-medium text-sm" data-tab="overview">
     Overview
   </button>
-  <button class="tab-btn tab-inactive px-6 py-3 font-medium text-sm" data-tab="ceu">
-    CEU Information & Generator
-  </button>
+<button class="tab-btn tab-inactive px-6 py-3 font-medium text-sm" data-tab="ceu" id="ceu-tab">
+  <span class="desktop-label">
+    CEU Information and Generator for Knowledge-Check Questions / Measurable Objectives
+  </span>
+  <span class="mobile-label">
+    CEU Information
+  </span>
+</button>
   <!-- Add this new button -->
   <button class="tab-btn tab-inactive px-6 py-3 font-medium text-sm" id="speaker-resource-center">
     Speaker Portal & Questionnaire
@@ -300,7 +319,7 @@ a {
         </p>
         <!-- CEU Question & Objective Generator Widget -->
   <div class="ceu-widget hidden sm:block">
-    <h2>Generate Ideas for CEU Knowledge-Check Questions &amp; Measureable Objectives</h2>
+    <h2>Generate Ideas for CEU Knowledge-Check Questions &amp; Measurable Objectives</h2>
         <p class="mt-6 mb-2 text-gray-800 font-semibold">
           To generate ideas for these questions and objectives, please note:
         </p>
@@ -321,7 +340,7 @@ a {
     <textarea id="description" rows="4" placeholder="Enter a brief session description…"></textarea>
 
     <label for="extra">Additional Info (Optional)</label>
-    <p class="instruction">Add information here such as how you want your knowledge-check questions and measureable objectives to be generated. You can also include supplemental information about your session to generate the most accurate results.</p>
+    <p class="instruction">Add information here such as how you want your knowledge-check questions and measurable objectives to be generated. You can also include supplemental information about your session to generate the most accurate results.</p>
     <textarea id="extra" rows="3" placeholder="Add any other context or useful information..."></textarea>
 
     <button id="generate-btn">
@@ -366,7 +385,7 @@ btn.addEventListener('click', () => {
 
   // 1) Check limit
   if (remainingClicks <= 0) {
-    out.textContent = `You have reached the maximum number of generations (${MAX_GENERATE_CLICKS}) for today. This limit resets each day. Your saved knowledge-check questions and measureable objectives will remain available for you to copy and paste so long as you do not clear your browser's local storage.`;
+    out.textContent = `You have reached the maximum number of generations (${MAX_GENERATE_CLICKS}) for today. This limit resets each day. Your saved knowledge-check questions and measurable objectives will remain available for you to copy and paste so long as you do not clear your browser's local storage.`;
     return;
   }
 
