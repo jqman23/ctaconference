@@ -243,6 +243,11 @@ a {
     margin-top: 0.2rem; /* Reduce space above the instruction */
     margin-bottom: 0.5rem; /* Reduce space below the instruction */
   }
+  @media (max-width: 640px) {
+  .ceu-widget {
+    display: none !important;
+  }
+}
   </style>
 </head>
 <body>
@@ -294,14 +299,13 @@ a {
             Speaker Portal & Questionnaire</a>.
         </p>
         <!-- CEU Question & Objective Generator Widget -->
-  <div class="ceu-widget">
+  <div class="ceu-widget hidden sm:block">
     <h2>Generate Ideas for CEU Knowledge-Check Questions &amp; Measureable Objectives</h2>
         <p class="mt-6 mb-2 text-gray-800 font-semibold">
           To generate ideas for these questions and objectives, please note:
         </p>
         <ol class="list-decimal list-inside text-gray-800 space-y-2 pl-6">
-          <li>You can generate up to 5 different sets of knowledge-check questions and measurable objectives each day.</li>
-          <li>Each set remains saved so long as you do not clear your browser’s local storage. You can reference back to each saved version to choose the most appropriate questions and objectives for your session.</li>
+          <li>You can generate up to 5 different sets of knowledge-check questions and measurable objectives each day. Each set remains saved so long as you do not clear your browser’s local storage. You can reference back to each saved version to choose the most appropriate questions and objectives for your session.</li>
           <li>You can edit and/or copy each set of questions and objectives at any time.</li>
         </ol>
         <br>
@@ -336,7 +340,7 @@ a {
         </div>
   <script>
     const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-    const API_KEY = 'Bearer API KEY';
+    const API_KEY = 'Bearer API KEY HERE'; // Replace with your actual API key
 
     const btn     = document.getElementById('generate-btn');
     const copyBtn = document.getElementById('copy-btn');
