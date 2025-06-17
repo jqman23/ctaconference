@@ -324,7 +324,7 @@ a {
           To generate ideas for these questions and objectives, please note:
         </p>
         <ol class="list-decimal list-inside text-gray-800 space-y-2 pl-6">
-          <li>You can generate up to 5 different sets of knowledge-check questions and measurable objectives each day. Each set remains saved so long as you do not clear your browser’s local storage. You can reference back to each saved version to choose the most appropriate questions and objectives for your session.</li>
+          <li>Generated knowledge-check questions and measurable objectives remain saved so long as you do not clear your browser’s local storage. You can reference back to each saved version to choose the most appropriate questions and objectives for your session.</li>
           <li>You can edit and/or copy each set of questions and objectives at any time.</li>
         </ol>
         <br>
@@ -359,7 +359,7 @@ a {
         </div>
   <script>
     const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-    const API_KEY = 'Bearer API KEY HERE'; // Replace with your actual API key
+    const API_KEY = 'Bearer API KEY';
 
     const btn     = document.getElementById('generate-btn');
     const copyBtn = document.getElementById('copy-btn');
