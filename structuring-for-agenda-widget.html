@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>CSV to JS Object Formatter (Copyable Output with Quote Replacement, Optional Speaker Images, specialTag, and Exclusions)</title>
-  <style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
@@ -544,66 +545,138 @@
           };
 
           // If an image CSV was provided, read it; otherwise proceed with blank imageMap
-          if (imageInput.files.length) {
-            const imageReader = new FileReader();
-            imageReader.onload = function (evt) {
-              const rawImageText = evt.target.result;
-              const imageRowsText = splitIntoLogicalRows(rawImageText);
+if (imageInput.files.length) {
+  const imageFile = imageInput.files[0];
+  const fileName = imageFile.name.toLowerCase();
+if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+  // Excel file: use SheetJS and extract formula directly
+  const reader = new FileReader();
+  reader.onload = function (evt) {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheet = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[firstSheet];
+    const range = XLSX.utils.decode_range(sheet['!ref']);
+    // Read headers
+    const headers = [];
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const cell = sheet[XLSX.utils.encode_cell({ r: range.s.r, c: C })];
+      headers.push(cell ? String(cell.v).trim() : '');
+    }
+    const normImageHeaders = headers.map(h => h.trim().toLowerCase().replace(/ /g, '_'));
+    const requiredImageCols = ['speaker_code', 'speaker_image'];
+    const missingImageCols = requiredImageCols.filter(col => !normImageHeaders.includes(col));
+    if (missingImageCols.length) {
+      errors.push(
+        `ERROR: Image URL file is missing required columns:\n  • ${missingImageCols.join(', ')}\n\n` +
+        `Available columns are:\n  • ${headers.join(', ')}`
+      );
+      outputArea.value = errors.join('\n');
+      lastErrors = errors.join('\n');
+      return;
+    }
+    // Build imageMap[speakerCode] = imageUrl
+    const imageMap = {};
+    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+      const rowObj = {};
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const header = normImageHeaders[C - range.s.c];
+        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+        const cell = sheet[cellAddress];
+        let val = cell ? (cell.v || '') : '';
+        // If this is the Speaker_Image column, try to get the formula
+        if (header === 'speaker_image' && cell && cell.f) {
+          // Extract URL from formula =HYPERLINK("url", ...)
+          const match = cell.f.match(/HYPERLINK\("([^"]+)"/i);
+          if (match) val = match[1];
+        }
+        rowObj[header] = val;
+      }
+      const speakerCode = (rowObj['speaker_code'] || '').trim();
+      const imageUrl = (rowObj['speaker_image'] || '').trim();
+      if (speakerCode) {
+        imageMap[speakerCode] = imageUrl;
+      } else {
+        errors.push(`WARNING: Image URL row ${R + 1}: “Speaker_Code” is empty.`);
+      }
+    }
+    processWithImageMap(imageMap);
+  };
+  reader.readAsArrayBuffer(imageFile);
+} else {
+    // CSV file: use as before
+    const imageReader = new FileReader();
+    imageReader.onload = function (evt) {
+      processImageCSV(evt.target.result);
+    };
+    imageReader.readAsText(imageFile);
+  }
 
-              if (imageRowsText.length < 2) {
-                const err = 'ERROR: Image URL CSV contains fewer than 2 logical rows (no data rows).';
-                outputArea.value = err;
-                lastErrors = err;
-                return;
-              }
+  function processImageCSV(rawImageText) {
+    const imageRowsText = splitIntoLogicalRows(rawImageText);
 
-              const rawImageHeaders = parseCSVLine(imageRowsText[0]).map(h => h.trim());
-              const normImageHeaders = rawImageHeaders.map(h => h.toLowerCase());
+    if (imageRowsText.length < 2) {
+      const err = 'ERROR: Image URL file contains fewer than 2 logical rows (no data rows).';
+      outputArea.value = err;
+      lastErrors = err;
+      return;
+    }
 
-              // Required columns in Image URL File
-              const requiredImageCols = [
-                'speaker code',
-                'image url'
-              ];
-              const missingImageCols = requiredImageCols.filter(col => !normImageHeaders.includes(col));
-              if (missingImageCols.length) {
-                errors.push(
-                  `ERROR: Image URL file is missing required columns:\n  • ${missingImageCols.join(', ')}\n\n` +
-                  `Available columns are:\n  • ${rawImageHeaders.join(', ')}`
-                );
-                outputArea.value = errors.join('\n');
-                lastErrors = errors.join('\n');
-                return;
-              }
+    const rawImageHeaders = parseCSVLine(imageRowsText[0]).map(h => h.trim());
+    const normImageHeaders = rawImageHeaders.map(h => h.trim().toLowerCase().replace(/ /g, '_'));
 
-              // Build imageMap[speakerCode] = imageUrl
-              const imageMap = {};
-              imageRowsText.slice(1).forEach((rowText, idx) => {
-                const fields = parseCSVLine(rowText);
-                const obj = {};
-                normImageHeaders.forEach((h, i) => {
-                  let val = fields[i] !== undefined ? fields[i].trim() : '';
-                  if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
-                    val = val.slice(1, -1).replace(/""/g, '"');
-                  }
-                  obj[h] = val;
-                });
-                const speakerCode = (obj['speaker code'] || '').trim();
-                const imageUrl = obj['image url'] || '';
-                if (speakerCode) {
-                  imageMap[speakerCode] = imageUrl;
-                } else {
-                  errors.push(`WARNING: Image URL row ${idx + 2}: “Speaker Code” is empty.`);
-                }
-              });
+    // Required columns in Image URL File
+    const requiredImageCols = [
+      'speaker_code',
+      'speaker_image'
+    ];
+    const missingImageCols = requiredImageCols.filter(col => !normImageHeaders.includes(col));
+    if (missingImageCols.length) {
+      errors.push(
+        `ERROR: Image URL file is missing required columns:\n  • ${missingImageCols.join(', ')}\n\n` +
+        `Available columns are:\n  • ${rawImageHeaders.join(', ')}`
+      );
+      outputArea.value = errors.join('\n');
+      lastErrors = errors.join('\n');
+      return;
+    }
 
-              processWithImageMap(imageMap);
-            };
-            imageReader.readAsText(imageInput.files[0]);
-          } else {
-            // No image file provided → empty imageMap
-            processWithImageMap({});
-          }
+    // Build imageMap[speakerCode] = imageUrl
+    const imageMap = {};
+    imageRowsText.slice(1).forEach((rowText, idx) => {
+      const fields = parseCSVLine(rowText);
+      const obj = {};
+      normImageHeaders.forEach((h, i) => {
+        let val = fields[i] !== undefined ? fields[i].trim() : '';
+        if (val.startsWith('"') && val.endsWith('"') && val.length >= 2) {
+          val = val.slice(1, -1).replace(/""/g, '"');
+        }
+        obj[h] = val;
+      });
+      const speakerCode = (obj['speaker_code'] || '').trim();
+      let imageUrlRaw = obj['speaker_image'] || '';
+      let imageUrl = '';
+      // Extract URL from =HYPERLINK("url", ...)
+      const match = imageUrlRaw.match(/=HYPERLINK\("([^"]+)"/i);
+      if (match) {
+        imageUrl = match[1];
+      } else {
+        imageUrl = imageUrlRaw; // fallback: use as-is
+      }
+      if (speakerCode) {
+        imageMap[speakerCode] = imageUrl;
+      } else {
+        errors.push(`WARNING: Image URL row ${idx + 2}: “Speaker_Code” is empty.`);
+      }
+    });
+
+    processWithImageMap(imageMap);
+  }
+} else {
+  // No image file provided → empty imageMap
+  processWithImageMap({});
+}
+
         };
 
         speakerReader.readAsText(speakerInput.files[0]);
