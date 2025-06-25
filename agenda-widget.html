@@ -3043,7 +3043,9 @@ const sessions = [
        theme: "",
        specialTag: "Just added",
        tags: [],
-       speakers: []
+       speakers: [
+           { name: "Omar Mohamed", role: "", company: "", bio: "Omar Mohamed is a 24-year-old, Asian British male born and raised in London, with family and ancestral roots from East Africa, India and Persia. Omar is a lived experience activist and sibling kinship carer and uses his role as a social worker as a platform to help make changes in the world that link to promoting social justice, equity, and human rights. Omar sits on a variety of committees and leadership groups, provides training and consultancy, and regularly contributes to the next generation of social workers through international work and education. Omar regularly publishes contributions to knowledge related to anti-racism and decolonisation, with a drive to continually promote diasporic, embodied, and indigenous knowledge.", linkedin: "", x: "", facebook: "", image: "" }
+       ]
    },
    {
        id: "90b2f377-f9a2-4b68-9971-ddd1f7620c0e",
@@ -3439,19 +3441,28 @@ window.addEventListener('resize', updateScheduleDayTabLabels);
 updateScheduleDayTabLabels();
 sessions.forEach((session, index) => {
   session.id = session.id || index + 1;
-if (!session.day) {
+  if (!session.day) {
     if (session.dateValue === 'oct6') session.day = 'day1';
     else if (session.dateValue === 'oct7') session.day = 'day2';
     else if (session.dateValue === 'oct8') session.day = 'day3';
     else if (session.dateValue === 'oct9') session.day = 'day4';
     else if (session.dateValue === 'oct10') session.day = 'day5';
     else session.day = 'day1';
-}
+  }
 
   session.location = session.location || 'TBD';
 
+  // --- FIX: Normalize empty theme to "Other or Not Applicable" ---
+  if (!session.themes && (session.theme === undefined || session.theme === "")) {
+    session.theme = "Other or Not Applicable";
+  }
   if (!session.themes && session.theme) {
     session.themes = [session.theme];
+  }
+
+  // --- FIX: Remove empty strings from themes array ---
+  if (session.themes && Array.isArray(session.themes)) {
+    session.themes = session.themes.filter(t => t && t.trim() !== "");
   }
 
   session.speakers = session.speakers || [
