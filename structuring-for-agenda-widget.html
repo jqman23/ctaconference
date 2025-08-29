@@ -300,7 +300,7 @@
             'session code',
             'first name',
             'last name',
-            'title'
+            'job title'
           ];
           const missingSpeakerCols = requiredSpeakerCols.filter(col => !normSpeakerHeaders.includes(col));
           if (missingSpeakerCols.length) {
@@ -335,7 +335,7 @@
             const speakerCode = (row['code'] || '').trim();
             const firstName = row['first name'] || '';
             const lastName = row['last name'] || '';
-            const role = row['title'] || '';
+            const role = row['job title'] || '';
             const fullName = `${firstName} ${lastName}`.trim();
 
             // Extract extra fields
