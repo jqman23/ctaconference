@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CSV → Sessions (Slim) — first Description column</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f6f7fb;margin:0}
+    .wrap{max-width:960px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08);padding:20px}
+    h1{font-size:20px;margin:0 0 12px}
+    label{font-weight:600;font-size:13px}
+    input[type="file"],input[type="text"]{padding:8px;border:1px solid #ddd;border-radius:8px}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .btn{padding:9px 12px;border-radius:8px;border:1px solid #ddd;cursor:pointer}
+    .btn.primary{background:#1f6feb;color:#fff;border-color:#1f6feb}
+    textarea{width:100%;height:440px;margin-top:10px;font-family:monospace;white-space:pre;border:1px solid #ddd;border-radius:8px;padding:10px}
+    .indicator{font-size:12px;color:green;opacity:0;transition:opacity .15s}
+    .indicator.show{opacity:1}
+    .errors{white-space:pre-wrap;color:#b91c1c;font-weight:600}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>CSV → Sessions (Slim)</h1>
+    <div class="row">
+      <div>
+        <label>Session CSV</label><br>
+        <input id="sessionFile" type="file" accept=".csv">
+      </div>
+      <div>
+        <label>Speaker CSV</label><br>
+        <input id="speakerFile" type="file" accept=".csv">
+      </div>
+      <div>
+        <label>Timezone offset</label><br>
+        <input id="tzOffset" type="text" value="-06:00">
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="processBtn" class="btn primary">Process</button>
+      <button id="copyOutBtn" class="btn">Copy Output</button><span id="copyOutInd" class="indicator">Copied</span>
+      <button id="copyErrBtn" class="btn">Copy Errors</button><span id="copyErrInd" class="indicator">Copied</span>
+    </div>
+
+    <textarea id="out"></textarea>
+    <div id="errs" class="errors"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- CSV helpers (quoted commas + multiline safe) ---------- */
+function parseCSVLine(line){
+  const out=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){ if(inQ && i+1<line.length && line[i+1]==='"'){cur+='"';i++;} else{inQ=!inQ;} }
+    else if(ch===',' && !inQ){ out.push(cur); cur=''; }
+    else cur+=ch;
+  }
+  out.push(cur); return out;
+}
+function splitIntoLogicalRows(text){
+  const phys=text.split(/\r\n|\n/),rows=[];let buf='',q=0;
+  for(const line of phys){
+    if(buf===''){buf=line;q=(line.match(/"/g)||[]).length;}
+    else{buf+='\n'+line;q+=(line.match(/"/g)||[]).length;}
+    if(q%2===0){rows.push(buf);buf='';q=0;}
+  }
+  if(buf.trim()!=='')rows.push(buf);
+  return rows.filter(r=>r.trim()!=='');
+}
+function cleanCell(v){
+  if(v===undefined||v===null) return '';
+  v=String(v).trim();
+  if(v.startsWith('"') && v.endsWith('"') && v.length>=2) v=v.slice(1,-1).replace(/""/g,'"');
+  return v;
+}
+
+/* ---------- Date helpers (expects "MM/DD/YYYY hh:mm:ss AM/PM") ---------- */
+function parseDateTimeString(s){
+  const p=s.trim().split(' '); if(p.length<3)return null;
+  const [mdy,hms,amp]=p; const dP=mdy.split('/'), tP=hms.split(':');
+  if(dP.length!==3||tP.length!==3)return null;
+  let [m,d,y]=dP.map(Number); let [H,Mi,S]=tP.map(Number);
+  if([m,d,y,H,Mi,S].some(isNaN))return null;
+  if(amp.toUpperCase()==='PM'&&H<12)H+=12; if(amp.toUpperCase()==='AM'&&H===12)H=0;
+  return{y,m,d,H,Mi,S};
+}
+function monthName(m){return['January','February','March','April','May','June','July','August','September','October','November','December'][m-1];}
+function formatDate(dt){return`${monthName(dt.m)} ${dt.d}, ${dt.y}`;}
+function fmt12(h){let v=h%12;return v===0?12:v;}
+function formatTimeOnly(dt){const mm=String(dt.Mi).padStart(2,'0');const per=dt.H<12?'AM':'PM';return`${fmt12(dt.H)}:${mm} ${per}`;}
+function formatTimeRange(s,e){if(!s)return'';if(!e)return formatTimeOnly(s);return`${formatTimeOnly(s)} - ${formatTimeOnly(e)}`;}
+function formatISO(dt){return`${dt.y}-${String(dt.m).padStart(2,'0')}-${String(dt.d).padStart(2,'0')}T${String(dt.H).padStart(2,'0')}:${String(dt.Mi).padStart(2,'0')}:${String(dt.S).padStart(2,'0')}`;}
+function formatDateValue(dt){const abbr=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];return`${abbr[dt.m-1]}${dt.d}`;}
+
+/* ---------- UI refs ---------- */
+const $session=document.getElementById('sessionFile');
+const $speaker=document.getElementById('speakerFile');
+const $tzOff=document.getElementById('tzOffset');
+const $out=document.getElementById('out');
+const $errs=document.getElementById('errs');
+const $indOut=document.getElementById('copyOutInd');
+const $indErr=document.getElementById('copyErrInd');
+let lastOutput='',lastErrors='';
+
+document.getElementById('processBtn').addEventListener('click',()=>{
+  $out.value='';$errs.textContent='';lastOutput='';lastErrors='';
+  if(!$session.files.length||!$speaker.files.length){const m='ERROR: Select both files';$errs.textContent=m;lastErrors=m;return;}
+
+  const sr=new FileReader();
+  sr.onload=e=>{
+    const sessRows=splitIntoLogicalRows(e.target.result);
+    if(sessRows.length<2){const m='ERROR: Session CSV has no data rows.';$errs.textContent=m;lastErrors=m;return;}
+    const sessHeaders=parseCSVLine(sessRows[0]).map(h=>h.trim());
+    const sessNorm=sessHeaders.map(h=>h.toLowerCase());
+
+    // index of the FIRST "description" column
+    const firstDescIdx = sessNorm.indexOf('description');
+
+    // Parse sessions row objects (then explicitly override description with the FIRST column)
+    const sessions=sessRows.slice(1).map(row=>{
+      const f=parseCSVLine(row),o={};
+      sessNorm.forEach((h,i)=>{ o[h]=cleanCell(f[i]); });
+      if(firstDescIdx !== -1){ o['description'] = cleanCell(f[firstDescIdx]); } // <-- first wins
+      return o;
+    });
+
+    const spr=new FileReader();
+    spr.onload=ev=>{
+      const spRows=splitIntoLogicalRows(ev.target.result);
+      if(spRows.length<2){const m='ERROR: Speaker CSV has no data rows.';$errs.textContent=m;lastErrors=m;return;}
+      const spHeaders=parseCSVLine(spRows[0]).map(h=>h.trim()),spNorm=spHeaders.map(h=>h.toLowerCase());
+
+      // Build speakers map
+      const speakersMap={};
+      spRows.slice(1).forEach((r,idx)=>{
+        const f=parseCSVLine(r),o={}; spNorm.forEach((h,i)=>{ o[h]=cleanCell(f[i]); });
+        const sess=o['session code'],code=o['code'];
+        const name=`${o['first name']||''} ${o['last name']||''}`.trim().replace(/"/g,"'");
+        const email=(o['email address']||'').replace(/"/g,"'");
+        if(sess&&code){ if(!speakersMap[sess]) speakersMap[sess]={}; speakersMap[sess][code]={name,email}; }
+      });
+
+      const tz=$tzOff.value;
+      const errors=[];
+      const outObjs=sessions.map((row,idx)=>{
+        const rnum=idx+2;
+        const s=parseDateTimeString(row['session start date/time']||'');
+        const e=parseDateTimeString(row['end date/time']||'');
+
+        // videoFormat precedence (later wins)
+        const rawVF=row['2025 cta session features']||'';
+        const v=rawVF.toLowerCase();
+        let videoFormat='';
+        if(v.includes('zoom')) videoFormat='Zoom';
+        if(v.includes('embedded')) videoFormat='Embedded';
+        if(v.includes('pre-recorded')||v.includes('pre recorded')||v.includes('prerecorded')) videoFormat='Embedded Simulive';
+        if(v.includes('livestream')||v.includes('live stream')||v.includes('live-stream')) videoFormat='Livestream via Zoom';
+        if(!videoFormat) videoFormat = rawVF;
+
+        const speakerCodes=(row['speaker code']||'').split(',').map(x=>x.trim()).filter(Boolean);
+        const speakers=[];
+        speakerCodes.forEach(code=>{
+          const sessCode=row['session code'];
+          if(!speakersMap[sessCode]){errors.push(`ERROR: Session row ${rnum}: No speakers for Session Code "${sessCode}".`);return;}
+          const info=speakersMap[sessCode][code];
+          if(!info){const avail=Object.keys(speakersMap[sessCode]||{}).join(', ');errors.push(`ERROR: Session row ${rnum}: Speaker Code "${code}" not found for Session "${sessCode}". Available: [${avail}]`);return;}
+          speakers.push({name:info.name,email:info.email});
+        });
+
+        const title=(row['session name']||'').replace(/"/g,"'");
+        const description=(row['description']||'').replace(/"/g,"'");
+
+        return{
+          id: row['session id']||'',
+          title,
+          description,                 // <-- from FIRST Description column
+          date: s?formatDate(s):'',
+          time: s?formatTimeRange(s,e):'',
+          datetime: s?(formatISO(s)+(tz||'')):'',
+          dateValue: s?formatDateValue(s):'',
+          type: row['presentation type']||'',
+          theme: row['category']||'',
+          specialTag: row['2025 cta special tag']||'',
+          recordingStatus: row['2025 cta recording']||'',
+          ceuEligibility: row['2025 cta ceu eligibility']||'',
+          videoFormat,
+          speakers
+        };
+      });
+
+      const js='const sessions = '+JSON.stringify(outObjs,null,2)+';';
+      $out.value=js; lastOutput=js; lastErrors=errors.join('\n'); $errs.textContent=lastErrors;
+    };
+    spr.readAsText($speaker.files[0]);
+  };
+  sr.readAsText($session.files[0]);
+});
+
+/* ---------- copy helpers ---------- */
+function copyText(t,el){ if(!t) return; (navigator.clipboard?.writeText(t)||Promise.resolve()).then(()=>{el.classList.add('show');setTimeout(()=>el.classList.remove('show'),800);}); }
+document.getElementById('copyOutBtn').addEventListener('click',()=>copyText(lastOutput,$indOut));
+document.getElementById('copyErrBtn').addEventListener('click',()=>copyText(lastErrors,$indErr));
+</script>
+</body>
+</html>
