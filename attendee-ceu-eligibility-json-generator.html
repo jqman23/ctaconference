@@ -267,11 +267,13 @@ document.getElementById('processBtn').addEventListener('click', async ()=>{
     const attendeesHashed = await hashWithPool(attendeesRaw, iterations);
 
     const asOf = getDenverAsOf();
-    const ceuJs =
-`const SESSIONS_AS_OF = "${asOf}";
-const PBKDF2_ITERATIONS = ${iterations};
-const ATTENDEE_INDEX = ${JSON.stringify(attendeesHashed, null, 2)};`;
-    lastOutputCEU = ceuJs;
+lastOutputCEU = {
+  SESSIONS_AS_OF: asOf,
+  PBKDF2_ITERATIONS: iterations,
+  ATTENDEE_INDEX: attendeesHashed
+};
+$out.value = JSON.stringify(lastOutputCEU, null, 2); // just for preview
+
 
     // --- Parse SESSIONS/SPEAKERS (optional; only if both provided) ---
     if($session.files.length && $speaker.files.length){
