@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Conference Promotion Toolkit</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- pdf-lib CDN (needed for graphic generator) -->
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
+  <style>
+  
+/* =================== GLOBAL =================== */
+body, p, select, button, textarea, div {
+  font-family: 'Montserrat', sans-serif;
+  color: #000;
+}
+body {
+  background: #fff;
+  padding: 20px;
+  margin: 0;
+}
+
+/* =================== TEXT GENERATOR =================== */
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 0;
+}
+p {
+  font-size: 16px;
+  line-height: 2.2;
+  margin-bottom: 1em;
+}
+.select-inline {
+  display: inline-block;
+  margin: 0 5px;
+  padding: 4px;
+  font-size: 16px;
+}
+button {
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 15px;
+  margin-right: 10px;
+}
+button#generateBtn,
+button#rephraseBtn {
+  background-color: #1E3A65;
+  color: #fff;
+}
+button#generateBtn:hover,
+button#rephraseBtn:hover {
+  filter: brightness(0.9);
+}
+button#copyBtn {
+  background-color: #DDE6C0;
+  color: #000;
+}
+button#copyBtn:hover {
+  filter: brightness(0.9);
+}
+#output {
+  width: 100%;
+  height: 150px;
+  font-size: 16px;
+  padding: 10px;
+  margin-top: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: none;
+}
+#copyMsg {
+  display: none;
+  font-size: 14px;
+  color: #162A53;
+  margin-top: 10px;
+}
+.editable-note {
+  font-size: 14px;
+  color: #555;
+  margin-top: 15px;
+  line-height: 1.2;
+}
+@media (max-width: 767px) {
+  .container {
+    display: none;
+  }
+}
+
+/* =================== GRAPHIC GENERATOR =================== */
+#form-container {
+  background: #fff;
+  width: 100%;
+  max-width: 700px;
+  margin: 40px auto 0;
+  padding: 16px 24px;
+}
+.options-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.option-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.option-card input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #162A53;
+  border-radius: 50%;
+  margin-right: 10px;
+  position: relative;
+  cursor: pointer;
+}
+.option-card input[type="radio"]:checked {
+  background: #162A53;
+}
+.option-card input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+}
+.option-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  flex: 1;
+}
+.option-label img {
+  width: 36px;
+  height: auto;
+}
+#custom-upload {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding-left: 28px;
+}
+#headshot-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+#headshot-input:focus {
+  outline: none;
+  border-color: #162A53;
+}
+#generate-btn {
+  display: block;
+  width: 100%;
+  background: #DDE6C0;
+  color: #000;
+  border: none;
+  padding: 10px 0;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+#generate-btn:hover {
+  filter: brightness(0.9);
+}
+@media (max-width: 800px) {
+  .options-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  #custom-upload {
+    padding-left: 0;
+  }
+}
+@media (max-width: 480px) {
+  .options-group {
+    grid-template-columns: 1fr;
+  }
+}
+  </style>
+</head>
+<body>
+  <!-- =================== TEXT GENERATOR =================== -->
+  <div class="container text-generator">
+    <p>
+      I am interested in posting about the conference via
+      <select id="platform" class="select-inline">
+        <option value="LinkedIn">LinkedIn</option>
+        <option value="Twitter/X">Twitter/X</option>
+        <option value="Email">Email</option>
+        <option value="Facebook">Facebook</option>
+        <option value="Instagram">Instagram</option>
+        <option value="BlueSky">BlueSky</option>
+        <option value="ResearchGate">ResearchGate</option>
+        <option value="Other">Other</option>
+      </select>
+      and I am a
+      <select id="role" class="select-inline">
+        <option value="professional">professional</option>
+        <option value="practitioner">practitioner</option>
+        <option value="parent">parent</option>
+        <option value="mental health professional">mental health professional</option>
+        <option value="child youth advocate">child youth advocate</option>
+        <option value="family advocate">family advocate</option>
+        <option value="kinship adoptive care provider">kinship adoptive care provider</option>
+        <option value="parent ally partner">parent ally partner</option>
+        <option value="tribal leader">tribal leader</option>
+        <option value="cultural broker">cultural broker</option>
+        <option value="legal professional">legal professional</option>
+        <option value="ombudsperson guardian">ombudsperson guardian</option>
+        <option value="health care professional">health care professional</option>
+        <option value="workforce development specialist">workforce development specialist</option>
+        <option value="researcher">researcher</option>
+        <option value="evaluator">evaluator</option>
+        <option value="student">student</option>
+        <option value="community prevention leader">community prevention leader</option>
+        <option value="policymaker">policymaker</option>
+        <option value="innovator">innovator</option>
+      </select>
+      working for a
+      <select id="target" class="select-inline">
+        <option value="child welfare agency">child welfare agency</option>
+        <option value="government agency">government agency</option>
+        <option value="nonprofit organization">nonprofit organization</option>
+        <option value="educational institution">educational institution</option>
+        <option value="healthcare provider">healthcare provider</option>
+        <option value="legal institution">legal institution</option>
+        <option value="advocacy group">advocacy group</option>
+        <option value="research organization">research organization</option>
+        <option value="workforce development program">workforce development program</option>
+        <option value="community-based organization">community-based organization</option>
+        <option value="other">Other</option>
+      </select>.
+    </p>
+
+    <button id="generateBtn">Generate text</button>
+    <button id="rephraseBtn">Rephrase</button>
+    <button id="copyBtn">Copy text</button>
+
+    <div id="copyMsg">Copied!</div>
+
+    <textarea id="output" placeholder="Your generated text will appear here..."></textarea>
+
+    <p class="editable-note">
+      You can edit the text above to further customize your message. Please double check the content
+      presented when using the Rephrase function.
+    </p>
+  </div>
+
+  <!-- =================== GRAPHIC GENERATOR =================== -->
+  <div id="form-container">
+    <p>Select an image for your 'I Am Attending' graphic:</p>
+    <div class="options-group">
+      <!-- Preset Option 1 -->
+      <label class="option-card" for="preset1">
+        <input type="radio" name="image-option" id="preset1" value="preset1" checked>
+        <span class="option-label">
+          <span>Use Preset Image 1</span>
+          <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/d9763d9dc8b64ad5abc391fcf840bf33.png" alt="Preset 1">
+        </span>
+      </label>
+
+      <!-- Preset Option 2 -->
+      <label class="option-card" for="preset2">
+        <input type="radio" name="image-option" id="preset2" value="preset2">
+        <span class="option-label">
+          <span>Use Preset Image 2</span>
+          <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/a85ed9884bb142f8b4fb629685bf88be.png" alt="Preset 2">
+        </span>
+      </label>
+
+      <!-- Preset Option 3 -->
+      <label class="option-card" for="preset3">
+        <input type="radio" name="image-option" id="preset3" value="preset3">
+        <span class="option-label">
+          <span>Use Preset Image 3</span>
+          <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/fad70cb89efd4e3588d19a935de95096.png" alt="Preset 3">
+        </span>
+      </label>
+
+      <!-- Preset Option 4 -->
+      <label class="option-card" for="preset4">
+        <input type="radio" name="image-option" id="preset4" value="preset4">
+        <span class="option-label">
+          <span>Use Preset Image 4</span>
+          <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/76a1cdba0e554b798632e2dcb32d6914.png" alt="Preset 4">
+        </span>
+      </label>
+
+      <!-- Preset Option 5 -->
+      <label class="option-card" for="preset5">
+        <input type="radio" name="image-option" id="preset5" value="preset5">
+        <span class="option-label">
+          <span>Use Preset Image 5</span>
+          <img src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/795bccf392e04e5caf345b61ca28892e.png" alt="Preset 5">
+        </span>
+      </label>
+
+      <!-- Custom Upload Option -->
+      <label class="option-card" for="custom">
+        <input type="radio" name="image-option" id="custom" value="custom">
+        <span class="option-label">Upload your own image or headshot</span>
+      </label>
+
+      <!-- File input -->
+      <div id="custom-upload">
+        <input type="file" id="headshot-input" accept="image/png, image/jpeg" disabled>
+      </div>
+    </div>
+    <button id="generate-btn">Generate Graphic</button>
+  </div>
+
+  <!-- =================== SCRIPTS =================== -->
+  <script src="script.js" defer></script>
+  <script>
+    // =================== TEXT GENERATOR ===================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('generateBtn').addEventListener('click', generateCopy);
+  document.getElementById('copyBtn').addEventListener('click', copyText);
+  document.getElementById('rephraseBtn').addEventListener('click', rephraseText);
+
+  // =================== GRAPHIC GENERATOR ===================
+  initGraphicGenerator();
+});
+
+function generateCopy() {
+  var platform = document.getElementById('platform').value;
+  var role = document.getElementById('role').value;
+  var target = document.getElementById('target').value;
+  var copy = "";
+  
+  if (platform === "LinkedIn") {
+    copy = "I’m thrilled to announce that I will be attending the 2025 International Virtual Conference: A Call to Action to Change Child Welfare, an innovative global gathering that seeks to transform child welfare systems through inclusive dialogue and evidence-based strategies. As a " + role + " working for a " + target + ", I believe in advancing meaningful solutions that create a lasting impact. Join this international movement for transformative change.";
+  } else if (platform === "Twitter/X") {
+    copy = "I am excited to attend the 2025 International Virtual Conference: A Call to Action to Change Child Welfare—a dynamic global event uniting changemakers to transform child welfare systems. As a " + role + " working for a " + target + ", I'm joining a movement for a more just and inclusive future. #CTAConference2025";
+  } else if (platform === "Email") {
+    copy = "Dear Friends/Colleagues,\n\nI want to share an exciting opportunity: the 2025 International Virtual Conference: A Call to Action to Change Child Welfare. As a " + role + " working for a " + target + ", I am proud to be part of a global initiative dedicated to transforming child welfare systems. This event brings together changemakers from around the world to share innovative ideas, lived experience, and evidence-based research. I hope you'll join me in supporting this important movement for lasting change.\n\nBest regards,\n[Your Name]";
+  } else if (platform === "Facebook") {
+    copy = "I'm excited to share information about the 2025 International Virtual Conference: A Call to Action to Change Child Welfare—a groundbreaking event where passionate changemakers are reimagining child welfare systems. As a " + role + " working for a " + target + ", I believe it's time to challenge outdated practices and build innovative solutions. Join me in this global movement for transformative change.";
+  } else if (platform === "Instagram") {
+    copy = "Join me at the 2025 International Virtual Conference: A Call to Action to Change Child Welfare—an inspiring global gathering dedicated to reimagining child welfare systems. As a " + role + " working for a " + target + ", I'm proud to be part of this transformative movement. Let's drive change together and create a future where every child, family, and community is valued. #CTAConference2025";
+  } else if (platform === "BlueSky") {
+    copy = "I’m excited to share that I will be attending the 2025 International Virtual Conference: A Call to Action to Change Child Welfare. This innovative virtual event unites global changemakers dedicated to transforming child welfare systems. As a " + role + " working for a " + target + ", I am joining a movement for transformative change. #CTAConference2025";
+  } else if (platform === "ResearchGate") {
+    copy = "I’m excited to share that I will be participating in the 2025 International Virtual Conference: A Call to Action to Change Child Welfare. This event offers a unique opportunity for professionals and researchers to exchange cutting-edge insights and evidence-based strategies. As a " + role + " working for a " + target + ", I look forward to engaging with peers on innovative research, ideas, and policies that drive transformative change in child welfare.";
+  } else {
+    copy = "I'm excited to share information about the 2025 International Virtual Conference: A Call to Action to Change Child Welfare. As a " + role + " working for a " + target + ", I am joining a passionate global movement dedicated to rethinking and transforming our child welfare systems to champion a future where every child, family, and community thrives.";
+  }
+  
+  document.getElementById('output').value = copy;
+  
+  // Automatically copy
+  navigator.clipboard.writeText(copy).then(function() {
+    var msgElem = document.getElementById('copyMsg');
+    msgElem.style.display = 'block';
+    setTimeout(function() {
+      msgElem.style.display = 'none';
+    }, 1000);
+  }).catch(function(err) {
+    console.error('Failed to copy: ', err);
+  });
+}
+
+function copyText() {
+  var outputElem = document.getElementById('output');
+  navigator.clipboard.writeText(outputElem.value).then(function() {
+    var msgElem = document.getElementById('copyMsg');
+    msgElem.style.display = 'block';
+    window.getSelection().removeAllRanges();
+    setTimeout(function() {
+      msgElem.style.display = 'none';
+    }, 1000);
+  }).catch(function(err) {
+    console.error('Failed to copy: ', err);
+  });
+}
+
+async function rephraseText() {
+  var text = document.getElementById('output').value;
+  if (!text.trim()) return;
+  document.getElementById('output').value = "Rephrasing...";
+  
+  try {
+    let response = await fetch("/api/social-share-widget-rephrase", {      method: "POST",
+headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{
+          role: "user", 
+          content: `Rewrite this text in a fresh way while keeping the same meaning, which will be used by individuals who have just registered for the 2025 Virtual International Call to Action to Change Child Welfare Conference, but avoid using any of the following words in the rephrase: Field, equity, equitable, equitability, equitableness, inequity, inequitable, diversity, diverse, diversify, diversification, diversely, diverseness, inclusion, inclusive, inclusivity, inclusiveness, potential. Remember, this rewrite will be used by registrants who have registered for the conference to promote the conference to others. So they will always refer to themselves as "I" not "You".
+
+Never add anything else besides the rewrite. It should always just include the rewritten text.
+
+This is for the 2025 Virtual International Call to Action to Change Child Welfare Conference. Never say anything explicit or negative. If the text to be rephrased is not clearly related to the conference, always respond by saying: Please generate conference-related text first. Text not clearly related to the conference will make no mention of the conference. To reiterate, if the text makes no mention of the conference explicitly, then say: Please generate conference-related text first. 
+
+Do not change how someone identifies their role or who they work with. If the text contains a phrase structured as 'I am a [role] working with [group],' you must keep those parts unchanged, but you can adjust the surrounding sentence structure for better flow. Remember, never adjust the [group] word or phrase if listed.
+
+RULE: In general, it's best to use the phrase "children, families, and communities" together.
+
+STRICT RULE: Before returning a response, check how many times each of these words appears: (a) children (b) families, and (c) communities. If any are repeated, rephrase to ensure each appears only once. But, don't force it. Always make sure re-written text sounds natural.
+
+Use confident, engaging language, but avoid exaggerated claims. Keep the tone professional yet inviting.
+
+Never say anything controversial, especially within the context of child welfare. Be mindful to words that you use such as child and parent, as people use those words in controversial dialogue within the context of how to change child welfare. 
+
+Whenever you are going to say how this event will act upon child welfare systems always use the word "transform." 
+
+If the original text already includes a hashtag, you may keep it. Otherwise, NEVER add a hashtag. Do not assume a hashtag is needed. If the text has no hashtag, leave it that way.
+
+STRICT RULE: If the input text already contains both a greeting and a closing, ALWAYS keep some type of greeting (Dear, Hello) and closing (Warm regards, Best regards, Sincerely).
+
+STRICT RULE: Only retain salutations and closings if the input text already contains both a greeting and a closing. Otherwise, do not add them. 
+
+Also never make claims about the nature of the persons work. Original text: ${text}`
+        }],
+        temperature: 0.85
+      })
+    });
+        let data = await response.json();
+    if (data.choices && data.choices.length > 0) {
+      document.getElementById('output').value = data.choices[0].message.content;
+    } else {
+      document.getElementById('output').value = "Sorry, the rephrase button is temporarily unavailable. Please click 'Generate text' to start over.";
+    }
+  } catch (error) {
+    document.getElementById('output').value = "Sorry, the rephrase button is temporarily unavailable. Please click 'Generate text' to start over.";
+    console.error(error);
+  }
+}
+
+// =================== GRAPHIC GENERATOR ===================
+function initGraphicGenerator() {
+  const { PDFDocument } = PDFLib;
+
+  // URLs for template and presets
+  const TEMPLATE_URL = 'https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/a492749233d84597b00bd0ee791f9baf.png';
+  const OPTION_URLS = {
+    preset1: 'https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/d9763d9dc8b64ad5abc391fcf840bf33.png',
+    preset2: 'https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/a85ed9884bb142f8b4fb629685bf88be.png',
+    preset3: 'https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/fad70cb89efd4e3588d19a935de95096.png',
+    preset4: 'https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/76a1cdba0e554b798632e2dcb32d6914.png',
+    preset5: 'https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/6e39e63ddecc460ba1e0481e3ecf2d04/795bccf392e04e5caf345b61ca28892e.png'
+  };
+
+  const fileInput = document.getElementById('headshot-input');
+  const radios = document.querySelectorAll('input[name="image-option"]');
+
+  function updateFileInputState() {
+    const customSelected = document.getElementById('custom').checked;
+    fileInput.disabled = !customSelected;
+    if (!customSelected) fileInput.value = '';
+  }
+  radios.forEach(r => r.addEventListener('change', updateFileInputState));
+  updateFileInputState();
+
+  function getImageDimensionsFromBytes(bytes) {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([bytes]);
+      const url = URL.createObjectURL(blob);
+      const img = new window.Image();
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        URL.revokeObjectURL(url);
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  document.getElementById('generate-btn').addEventListener('click', async () => {
+    let overlayBytes;
+    try {
+      const selected = document.querySelector('input[name="image-option"]:checked').id;
+      if (OPTION_URLS[selected]) {
+        overlayBytes = await (await fetch(OPTION_URLS[selected])).arrayBuffer();
+      } else if (selected === "custom") {
+        const file = fileInput.files[0];
+        if (!file) { alert('Please choose a file to upload.'); return; }
+        overlayBytes = await file.arrayBuffer();
+      } else {
+        alert('Please select or upload an image.'); return;
+      }
+    } catch (err) {
+      console.error(err); alert('Error reading selected image.'); return;
+    }
+
+    let templateBytes;
+    try { templateBytes = await (await fetch(TEMPLATE_URL)).arrayBuffer(); }
+    catch (err) { console.error(err); alert('Error fetching template.'); return; }
+
+    const pdfDoc = await PDFDocument.create();
+    let templateImage;
+    try { templateImage = await pdfDoc.embedPng(templateBytes); }
+    catch (e) { console.error(e); alert('Failed to embed template PNG.'); return; }
+
+    const templateDims = templateImage.scale(1);
+    const page = pdfDoc.addPage([templateDims.width, templateDims.height]);
+    page.drawImage(templateImage, { x: 0, y: 0, width: templateDims.width, height: templateDims.height });
+
+    let overlayImage;
+    try {
+      const header = new Uint8Array(overlayBytes).subarray(0, 4);
+      const isPng = header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47;
+      overlayImage = isPng ? await pdfDoc.embedPng(overlayBytes) : await pdfDoc.embedJpg(overlayBytes);
+    } catch (e) { console.error(e); alert('Failed to embed overlay image.'); return; }
+
+    const bottom = 952, top = 638, maxHeight = bottom - top;
+    const imageDims = await getImageDimensionsFromBytes(overlayBytes);
+    let scale = 1;
+    if (imageDims.height > maxHeight) scale = maxHeight / imageDims.height;
+
+    const drawWidth = imageDims.width * scale;
+    const drawHeight = imageDims.height * scale;
+    const pdfX = (templateDims.width - drawWidth) / 2;
+    const pdfY = templateDims.height - bottom;
+
+    page.drawImage(overlayImage, { x: pdfX, y: pdfY, width: drawWidth, height: drawHeight });
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'custom_attendance_graphic.pdf';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+}
+                                
+  </script>
+</body>
+</html>
+
