@@ -413,39 +413,58 @@ document.getElementById('copyOutSpeakersNoEmailBtn').addEventListener('click', (
     $errs.textContent = 'ERROR creating no-email output: ' + err.message;
   }
 });
-/* ---------- CEU PUBLISH ---------- */
-document.getElementById('publishCEUBtn').addEventListener('click', () => {
-  if (!lastOutputCEUObj) { // <-- must keep the raw JSON object
-    $errs.textContent = 'Generate CEU JSON first.';
-    return;
-  }
-  publishToGist(
-    '/api/update-gist',
-    lastOutputCEUObj,
-    () => {
+// ---------- publish CEU ----------
+document.getElementById('publishCEUBtn').addEventListener('click', async () => {
+  if (!lastOutputCEU) { $errs.textContent = 'Generate first'; return; }
+  try {
+    const res = await fetch('/api/update-gist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lastOutputCEU)
+    });
+    if (res.ok) {
       document.getElementById('publishCEUInd').classList.add('show');
       setTimeout(() => document.getElementById('publishCEUInd').classList.remove('show'), 1000);
-    },
-    (msg) => { $errs.textContent = msg; }
-  );
+    } else {
+      $errs.textContent = 'Publish failed';
+    }
+  } catch (err) {
+    $errs.textContent = 'Publish error: ' + err.message;
+  }
 });
 
-/* ---------- SPEAKER (NO EMAIL) PUBLISH ---------- */
-document.getElementById('publishSpeakersNoEmailBtn').addEventListener('click', () => {
-  if (!lastOutputSpeakersNoEmailObj) { // <-- must keep raw JSON object too
-    $errs.textContent = 'Generate Speakers JSON first.';
-    return;
-  }
-  publishToGist(
-    '/api/update-session-speaker-gist',
-    lastOutputSpeakersNoEmailObj,
-    () => {
+// ---------- publish Speakers (no emails) ----------
+document.getElementById('publishSpeakersNoEmailBtn').addEventListener('click', async () => {
+  if (!lastOutputSpeakers) { $errs.textContent = 'Generate first'; return; }
+  try {
+    const match = lastOutputSpeakers.match(/const sessions = (.*);$/s);
+    if (!match) throw new Error("Sessions not found in output");
+    const sessions = JSON.parse(match[1]);
+    const sessionsNoEmail = sessions.map(s => ({
+      ...s,
+      speakers: (s.speakers || []).map(sp => {
+        const { email, ...rest } = sp;
+        return rest;
+      })
+    }));
+    const payload = { SESSIONS_AS_OF: getDenverAsOf(), sessions: sessionsNoEmail };
+
+    const res = await fetch('/api/update-session-speaker-gist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
       document.getElementById('publishSpeakersNoEmailInd').classList.add('show');
       setTimeout(() => document.getElementById('publishSpeakersNoEmailInd').classList.remove('show'), 1000);
-    },
-    (msg) => { $errs.textContent = msg; }
-  );
+    } else {
+      $errs.textContent = 'Publish failed';
+    }
+  } catch (err) {
+    $errs.textContent = 'Publish error: ' + err.message;
+  }
 });
+
 
 </script>
 </body>
