@@ -193,6 +193,20 @@
       const abbr = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
       return `${abbr[dt.month - 1]}${dt.day}`;
     }
+function stripHTMLTags(str) {
+  if (!str) return '';
+  return str.replace(/<[^>]*>/g, '');  // remove all <tags>
+}
+function sanitizeDescription(str) {
+  if (!str) return '';
+  // Remove HTML tags
+  let cleaned = stripHTMLTags(str);
+  // Replace double quotes with single quotes
+  cleaned = cleaned.replace(/"/g, "'");
+  // Replace line breaks with spaces (so JS doesn’t break)
+  cleaned = cleaned.replace(/\r?\n|\r/g, ' ');
+  return cleaned.trim();
+}
 
     // Will hold the final formatted output (wrapped) for the Copy button
     let lastFormattedOutput = '';
@@ -300,7 +314,7 @@
             'session code',
             'first name',
             'last name',
-            'job title'
+            'title'
           ];
           const missingSpeakerCols = requiredSpeakerCols.filter(col => !normSpeakerHeaders.includes(col));
           if (missingSpeakerCols.length) {
@@ -335,7 +349,7 @@
             const speakerCode = (row['code'] || '').trim();
             const firstName = row['first name'] || '';
             const lastName = row['last name'] || '';
-            const role = row['job title'] || '';
+            const role = row['title'] || '';
             const fullName = `${firstName} ${lastName}`.trim();
 
             // Extract extra fields
@@ -501,9 +515,9 @@
               bodyOutput += '   {\n';
               bodyOutput += `       id: "${sessionId}",\n`;
               bodyOutput += `       title: "${sessionName}",\n`;
-              let descriptionRaw = row['description'] || '';
-              let description = descriptionRaw.replace(/"/g, "'"); // Replace all " with '
-              bodyOutput += `       description: "${description}",\n`;
+let descriptionRaw = row['description'] || '';
+let description = sanitizeDescription(descriptionRaw);
+bodyOutput += `       description: "${description}",\n`;
               bodyOutput += `       date: "${formattedDate}",\n`;
               bodyOutput += `       time: "${formattedTime}",\n`;
               bodyOutput += `       datetime: "${formattedDateTime}",\n`;
