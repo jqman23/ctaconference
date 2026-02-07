@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conference Banner Animation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .banner-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 60px 40px;
+            position: relative;
+        }
+
+        .words-container {
+            width: 100%;
+            position: relative;
+            height: 450px;
+            overflow: hidden;
+            mask-image: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(0, 0, 0, 0.3) 15%,
+                rgba(0, 0, 0, 0.8) 35%,
+                black 50%,
+                rgba(0, 0, 0, 0.8) 65%,
+                rgba(0, 0, 0, 0.3) 85%,
+                transparent 100%
+            );
+            -webkit-mask-image: linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(0, 0, 0, 0.3) 15%,
+                rgba(0, 0, 0, 0.8) 35%,
+                black 50%,
+                rgba(0, 0, 0, 0.8) 65%,
+                rgba(0, 0, 0, 0.3) 85%,
+                transparent 100%
+            );
+        }
+
+        .tile {
+            position: absolute;
+            width: 100%;
+            background: #122345;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 20px 30px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .word {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 38px;
+            font-weight: 300;
+            color: #ffffff;
+        }
+
+        @media (max-width: 480px) {
+            .banner-container {
+                padding: 40px 20px;
+            }
+
+            .word {
+                font-size: 28px;
+            }
+
+            .tile {
+                padding: 16px 20px;
+                height: 65px;
+            }
+
+            .words-container {
+                height: 370px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="banner-container">
+        <div class="words-container" id="container">
+            <!-- Tiles will be dynamically positioned here -->
+        </div>
+    </div>
+
+    <script>
+        const words = ['creativity', 'innovation', 'imagination', 'collaboration', 'transformation'];
+        const container = document.getElementById('container');
+        const tileHeight = 80;
+        const gap = 8;
+        const tileSpacing = tileHeight + gap; // Total space one tile occupies
+        const speed = 30; // pixels per second
+        const totalCycleHeight = tileSpacing * words.length; // Height for one complete cycle
+        
+        let offset = 0; // This accumulates forever
+        let tiles = [];
+        
+        // Create tiles
+        words.forEach((word, index) => {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            const wordDiv = document.createElement('div');
+            wordDiv.className = 'word';
+            wordDiv.textContent = word;
+            tile.appendChild(wordDiv);
+            container.appendChild(tile);
+            tiles.push({ element: tile, baseIndex: index });
+        });
+        
+        let lastTime = performance.now();
+        
+        function animate(currentTime) {
+            const deltaTime = (currentTime - lastTime) / 1000; // Convert to seconds
+            lastTime = currentTime;
+            
+            // Increment offset - this never resets, just keeps growing
+            offset += speed * deltaTime;
+            
+            // Position each tile based on current offset
+            tiles.forEach((tile, i) => {
+                // Calculate this tile's position in the infinite scroll
+                const basePosition = i * tileSpacing;
+                const currentPosition = basePosition - (offset % totalCycleHeight);
+                
+                // Wrap position to create seamless loop
+                let wrappedPosition = currentPosition;
+                if (wrappedPosition < -tileHeight - gap) {
+                    wrappedPosition += totalCycleHeight;
+                }
+                if (wrappedPosition > container.offsetHeight + gap) {
+                    wrappedPosition -= totalCycleHeight;
+                }
+                
+                tile.element.style.transform = `translateY(${wrappedPosition}px)`;
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Start animation
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
