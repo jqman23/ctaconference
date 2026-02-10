@@ -1,0 +1,170 @@
+<!-- FORCE LOAD THE REAL MONTSERRAT (required to match PNG) -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<div id="heroOverlay">
+  <img 
+    src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/e7d15afcf2b14901ab0272ce8a401899/2c2e87955ad14ac384d383fd6351af30.png"
+    id="heroImage"
+    alt="Hero Background"
+  >
+
+  <div id="overlayText">
+    A <span class="strong">bold</span> new space for 
+    <span id="rotatingWrapper">
+      <span id="ghost">global transformation</span>
+      <span id="rotatingMask">
+        <span id="rotatingWord"></span>
+      </span>
+    </span>
+  </div>
+</div>
+
+<style>
+  /* GLOBAL FONT SMOOTHING — makes it match your PNG */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-kerning: normal;
+  }
+  html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Chrome-only: hide scrollbar UI completely inside the widget iframe */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+  /* Container */
+#heroOverlay {
+  position: relative;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  overflow: hidden;
+  line-height: 0; /* kills tiny baseline gap that can trigger Chrome overflow */
+}
+
+
+  #heroImage {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* OVERLAY TEXT — bottom-left positioning */
+  #overlayText {
+    position: absolute;
+    bottom: 16vw;
+    left: 10vw;
+
+    font-family: "Montserrat", sans-serif;
+    font-size: 2.5vw;
+    font-weight: 400;
+    color: #122345;
+    white-space: nowrap;
+
+    letter-spacing: -0.01em; /* tighter kerning to match PNG */
+  }
+
+  /* “bold” real bold */
+  .strong {
+    font-weight: 600;   /* PNG uses 600, not 700 */
+    letter-spacing: -0.01em;
+  }
+
+  /* Rotating system */
+  #rotatingWrapper {
+    display: inline-block;
+    position: relative;
+  }
+
+  /* Invisible stabilizer */
+  #ghost {
+    visibility: hidden;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    white-space: nowrap;
+
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* Background bubble */
+  #rotatingMask {
+    display: inline-flex;
+    align-items: center;
+
+    background: #122345;
+    color: white;
+    border-radius: 0.15em;
+
+    padding: 0.15em 0.45em;
+    overflow: hidden;
+    height: 1.3em;
+
+    margin-left: 0.35em;
+  }
+
+  /* Rotating word */
+  #rotatingWord {
+    display: inline-block;
+    white-space: nowrap;
+
+    font-weight: 600;          /* match PNG-bold look */
+    color: white;
+    letter-spacing: -0.01em;   /* tighter kerning */
+    
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+
+  /* Animation */
+  @keyframes wipeInVertical {
+    0%   { transform: translateY(-100%); opacity: 0; }
+    60%  { transform: translateY(0%);   opacity: 1; }
+    100% { transform: translateY(0%);   opacity: 1; }
+  }
+
+  @keyframes wipeOutVertical {
+    0%   { transform: translateY(0%);   opacity: 1; }
+    100% { transform: translateY(100%); opacity: 0; }
+  }
+</style>
+
+<script>
+  const words = [
+    "imagination",
+    "innovation",
+    "global transformation",
+    "collaboration"
+  ];
+
+  const rotating = document.getElementById("rotatingWord");
+  const ghost = document.getElementById("ghost");
+
+  ghost.textContent = "global transformation";
+
+  let i = 0;
+
+  rotating.textContent = words[0];
+  rotating.style.animation = "wipeInVertical 0.8s ease forwards";
+
+  function cycle() {
+    rotating.style.animation = "wipeOutVertical 0.6s ease forwards";
+
+    setTimeout(() => {
+      i = (i + 1) % words.length;
+      rotating.textContent = words[i];
+      rotating.style.animation = "wipeInVertical 0.8s ease forwards";
+    }, 600);
+  }
+
+  setInterval(cycle, 3000);
+</script>
