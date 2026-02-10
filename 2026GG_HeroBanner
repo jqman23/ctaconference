@@ -266,20 +266,38 @@
       rotating.style.animation = "wipeInVertical 0.8s ease forwards";
     }, 600);
   }
-
   setInterval(cycle, 3000);
 
   /* =========================
-     CLICK TRACKING (NEW)
+     CLICK TRACKING (UPDATED TO MATCH TIMELINE WIDGET)
      ========================= */
-  function trackVideoClick() {
-    const TRACKING_URL =
-      "https://script.google.com/macros/s/AKfycbxq8HofSFbnFxS7HeKQKZVhyuPIqpu_7NAWhvOzAXBzyxfatdeJu8hfGCRCahOINshA/exec" +
-      "?sheet=2026CFP" +
-      "&button=Hero_Image_BrandVideo";
+  let visitorIP = '', visitorCountry = '', visitorState = '', visitorCity = '';
 
-    // Fire-and-forget (no blocking, no errors shown to user)
-    fetch(TRACKING_URL, { mode: "no-cors" }).catch(() => {});
+  // Same geo provider as your working widget
+  fetch('https://geolocation-db.com/json/')
+    .then(res => res.json())
+    .then(data => {
+      visitorIP      = data.IPv4         || '';
+      visitorCountry = data.country_name || '';
+      visitorState   = data.state        || '';
+      visitorCity    = data.city         || '';
+    })
+    .catch(() => {});
+
+  const TRACKING_BASE =
+    "https://script.google.com/macros/s/AKfycbxq8HofSFbnFxS7HeKQKZVhyuPIqpu_7NAWhvOzAXBzyxfatdeJu8hfGCRCahOINshA/exec";
+
+  function trackVideoClick() {
+    const params = new URLSearchParams({
+      sheet:   "2026CFP",
+      button:  "Hero_Image_BrandVideo",
+      ip:      visitorIP,
+      country: visitorCountry,
+      state:   visitorState,
+      city:    visitorCity
+    });
+
+    fetch(`${TRACKING_BASE}?${params.toString()}`, { mode: "no-cors" }).catch(() => {});
   }
 
   /* VIDEO OPEN / CLOSE */
@@ -291,10 +309,7 @@
   const VIDEO_SRC = "https://www.youtube.com/embed/MuINCXtjuTk?autoplay=1&rel=0";
 
   openBtn.addEventListener("click", () => {
-    // 🔴 TRACK THE CLICK
-    trackVideoClick();
-
-    // Existing behavior
+    trackVideoClick();         // ✅ now sends ip/country/state/city too
     iframe.src = VIDEO_SRC;
     overlay.classList.add("active");
   });
@@ -304,15 +319,14 @@
     overlay.classList.remove("active");
   });
 
-  /* MOBILE SAFETY: if someone resizes into mobile while video is open, force close */
   function forceCloseVideoIfMobile() {
     if (window.matchMedia("(max-width: 768px)").matches) {
       iframe.src = "";
       overlay.classList.remove("active");
     }
   }
-
   window.addEventListener("resize", forceCloseVideoIfMobile);
   forceCloseVideoIfMobile();
 </script>
+
 
