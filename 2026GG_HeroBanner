@@ -1,7 +1,19 @@
 <!-- FORCE LOAD THE REAL MONTSERRAT (required to match PNG) -->
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+<!-- PRELOAD THE OVERLAY BACKGROUND IMAGE (makes it feel instant) -->
+<link rel="preload" as="image" href="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/e7d15afcf2b14901ab0272ce8a401899/f36476d549644a069f9f7fb101cf2603.png">
+
 <div id="heroOverlay">
+  <!-- CACHE WARMER (forces early fetch + decode so no "top-to-bottom" paint feeling) -->
+  <img
+    id="preloadOverlayBg"
+    src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/e7d15afcf2b14901ab0272ce8a401899/f36476d549644a069f9f7fb101cf2603.png"
+    alt=""
+    decoding="async"
+    fetchpriority="high"
+  >
+
   <img 
     src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/e7d15afcf2b14901ab0272ce8a401899/2c2e87955ad14ac384d383fd6351af30.png"
     id="heroImage"
@@ -17,38 +29,61 @@
       </span>
     </span>
   </div>
+
+  <!-- CLICK TARGET (icon stays exactly as before) -->
+  <button id="titleIconLink" aria-label="Watch the video">
+    <img
+      src="https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/e7d15afcf2b14901ab0272ce8a401899/58a0940ba62a42db9cfbbf1bac36d979.png"
+      alt=""
+      id="titleIcon"
+    >
+  </button>
+
+  <!-- VIDEO OVERLAY MODAL -->
+  <div id="videoOverlay" aria-hidden="true">
+    <button id="closeVideo" aria-label="Close video">✕</button>
+
+    <div id="videoWrapper">
+      <iframe
+        src=""
+        title="YouTube video player"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </div>
 </div>
 
 <style>
-  /* GLOBAL FONT SMOOTHING — makes it match your PNG */
+  /* GLOBAL FONT SMOOTHING */
   * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-kerning: normal;
   }
+
   html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
-}
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
 
-/* Chrome-only: hide scrollbar UI completely inside the widget iframe */
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-}
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+  }
 
-  /* Container */
-#heroOverlay {
-  position: relative;
-  width: 100%;
-  max-width: 1600px;
-  margin: 0 auto;
-  overflow: hidden;
-  line-height: 0; /* kills tiny baseline gap that can trigger Chrome overflow */
-}
-
+  #heroOverlay {
+    position: relative;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    overflow: hidden;
+    line-height: 0;
+  }
 
   #heroImage {
     width: 100%;
@@ -56,109 +91,175 @@ body::-webkit-scrollbar {
     display: block;
   }
 
-  /* OVERLAY TEXT — bottom-left positioning */
+  /* HIDE THE PRELOADER IMAGE (still downloads/decodes) */
+  #preloadOverlayBg{
+    position:absolute;
+    width:1px;
+    height:1px;
+    opacity:0;
+    pointer-events:none;
+    left:-9999px;
+    top:-9999px;
+  }
+
   #overlayText {
     position: absolute;
     bottom: 16vw;
     left: 10vw;
-
     font-family: "Montserrat", sans-serif;
     font-size: 2.5vw;
     font-weight: 400;
     color: #122345;
     white-space: nowrap;
-
-    letter-spacing: -0.01em; /* tighter kerning to match PNG */
-  }
-
-  /* “bold” real bold */
-  .strong {
-    font-weight: 600;   /* PNG uses 600, not 700 */
     letter-spacing: -0.01em;
   }
 
-  /* Rotating system */
+  .strong {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
   #rotatingWrapper {
     display: inline-block;
     position: relative;
   }
 
-  /* Invisible stabilizer */
   #ghost {
     visibility: hidden;
-    pointer-events: none;
     position: absolute;
     top: 0;
     left: 0;
     white-space: nowrap;
-
     font-weight: 600;
-    letter-spacing: -0.01em;
   }
 
-  /* Background bubble */
   #rotatingMask {
     display: inline-flex;
     align-items: center;
-
     background: #122345;
     color: white;
     border-radius: 0.15em;
-
     padding: 0.15em 0.45em;
-    overflow: hidden;
     height: 1.3em;
-
     margin-left: 0.35em;
+    overflow: hidden;
   }
 
-  /* Rotating word */
   #rotatingWord {
-    display: inline-block;
-    white-space: nowrap;
-
-    font-weight: 600;          /* match PNG-bold look */
-    color: white;
-    letter-spacing: -0.01em;   /* tighter kerning */
-    
+    font-weight: 600;
     opacity: 0;
     transform: translateY(-100%);
   }
 
-  /* Animation */
   @keyframes wipeInVertical {
-    0%   { transform: translateY(-100%); opacity: 0; }
-    60%  { transform: translateY(0%);   opacity: 1; }
-    100% { transform: translateY(0%);   opacity: 1; }
+    0% { transform: translateY(-100%); opacity: 0; }
+    60% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(0); opacity: 1; }
   }
 
   @keyframes wipeOutVertical {
-    0%   { transform: translateY(0%);   opacity: 1; }
+    0% { transform: translateY(0); opacity: 1; }
     100% { transform: translateY(100%); opacity: 0; }
+  }
+
+  /* ICON (unchanged behavior) */
+  #titleIconLink {
+    position: absolute;
+    left: 70vw;
+    top: 20vw;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  #titleIcon {
+    width: 25vw;
+    max-width: 200px;
+    min-width: 80px;
+    transition: transform 0.2s ease;
+  }
+
+  #titleIconLink:hover #titleIcon {
+    transform: scale(1.06);
+  }
+
+  /* ======================
+     VIDEO MODAL OVERLAY
+     ====================== */
+  #videoOverlay {
+    position: absolute;
+    inset: 0;
+
+    background-image: url("https://custom.cvent.com/AE944F71438646268B70FF5BF3772347/files/event/e7d15afcf2b14901ab0272ce8a401899/f36476d549644a069f9f7fb101cf2603.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    display: none;
+    z-index: 20;
+  }
+
+  #videoOverlay.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #videoWrapper {
+    width: 90%;
+    max-width: 1000px;
+    aspect-ratio: 16 / 9;
+  }
+
+  #videoWrapper iframe {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  #closeVideo {
+    position: absolute;
+    top: 3vw;
+    right: 3vw;
+    font-size: 32px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    z-index: 25;
+  }
+
+  /* =========================================
+     MOBILE: HIDE VIDEO ICON + VIDEO OVERLAY
+     ========================================= */
+  @media (max-width: 768px) {
+    #titleIconLink {
+      display: none !important;
+    }
+    #videoOverlay {
+      display: none !important;
+    }
+    #videoOverlay.active {
+      display: none !important;
+    }
   }
 </style>
 
 <script>
-  const words = [
-    "imagination",
-    "innovation",
-    "global transformation",
-    "collaboration"
-  ];
-
+  /* ROTATING WORD LOGIC (UNCHANGED) */
+  const words = ["imagination","innovation","global transformation","collaboration"];
   const rotating = document.getElementById("rotatingWord");
   const ghost = document.getElementById("ghost");
-
   ghost.textContent = "global transformation";
 
   let i = 0;
-
   rotating.textContent = words[0];
   rotating.style.animation = "wipeInVertical 0.8s ease forwards";
 
   function cycle() {
     rotating.style.animation = "wipeOutVertical 0.6s ease forwards";
-
     setTimeout(() => {
       i = (i + 1) % words.length;
       rotating.textContent = words[i];
@@ -167,4 +268,32 @@ body::-webkit-scrollbar {
   }
 
   setInterval(cycle, 3000);
+
+  /* VIDEO OPEN / CLOSE */
+  const openBtn = document.getElementById("titleIconLink");
+  const overlay = document.getElementById("videoOverlay");
+  const iframe = overlay.querySelector("iframe");
+  const closeBtn = document.getElementById("closeVideo");
+
+  const VIDEO_SRC = "https://www.youtube.com/embed/MuINCXtjuTk?autoplay=1&rel=0";
+
+  openBtn.addEventListener("click", () => {
+    iframe.src = VIDEO_SRC;
+    overlay.classList.add("active");
+  });
+
+  closeBtn.addEventListener("click", () => {
+    iframe.src = "";
+    overlay.classList.remove("active");
+  });
+
+  /* MOBILE SAFETY: if someone resizes into mobile while video is open, force close */
+  function forceCloseVideoIfMobile() {
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      iframe.src = "";
+      overlay.classList.remove("active");
+    }
+  }
+  window.addEventListener("resize", forceCloseVideoIfMobile);
+  forceCloseVideoIfMobile();
 </script>
