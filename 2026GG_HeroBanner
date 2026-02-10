@@ -269,6 +269,19 @@
 
   setInterval(cycle, 3000);
 
+  /* =========================
+     CLICK TRACKING (NEW)
+     ========================= */
+  function trackVideoClick() {
+    const TRACKING_URL =
+      "https://script.google.com/macros/s/AKfycbxq8HofSFbnFxS7HeKQKZVhyuPIqpu_7NAWhvOzAXBzyxfatdeJu8hfGCRCahOINshA/exec" +
+      "?sheet=2026CFP" +
+      "&button=Hero_Image_BrandVideo";
+
+    // Fire-and-forget (no blocking, no errors shown to user)
+    fetch(TRACKING_URL, { mode: "no-cors" }).catch(() => {});
+  }
+
   /* VIDEO OPEN / CLOSE */
   const openBtn = document.getElementById("titleIconLink");
   const overlay = document.getElementById("videoOverlay");
@@ -278,6 +291,10 @@
   const VIDEO_SRC = "https://www.youtube.com/embed/MuINCXtjuTk?autoplay=1&rel=0";
 
   openBtn.addEventListener("click", () => {
+    // 🔴 TRACK THE CLICK
+    trackVideoClick();
+
+    // Existing behavior
     iframe.src = VIDEO_SRC;
     overlay.classList.add("active");
   });
@@ -294,6 +311,8 @@
       overlay.classList.remove("active");
     }
   }
+
   window.addEventListener("resize", forceCloseVideoIfMobile);
   forceCloseVideoIfMobile();
 </script>
+
